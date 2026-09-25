@@ -124,7 +124,7 @@ class BayesianConfidenceEngine:
 
     def normalize_reranker_score(self, evidence: Sequence[EvidenceChunk]) -> float:
         """
-        Convert Cross-Encoder logit scores to [0.0, 1.0] via sigmoid transform.
+        Convert Cross-Encoder logit scores or RRF scores to [0.0, 1.0].
         """
         if not evidence:
             return 0.0
@@ -132,6 +132,13 @@ class BayesianConfidenceEngine:
         if not scores:
             return 0.50
         max_score = max(scores)
+        # If max_score <= 1.0, it is an RRF score (rank fusion score in [0.0, ~0.033]), NOT a Cross-Encoder logit!
+        if max_score <= 1.0:
+            has_bm25 = any(c.bm25_score is not None and c.bm25_score > 0.0 for c in evidence)
+            if not has_bm25:
+                # If BM25 has zero keyword matches, max RRF relevance is capped at 0.50
+                return max(0.0, min(0.50, float(max_score / 0.033)))
+            return max(0.0, min(1.0, float(max_score / 0.033)))
         # Sigmoid with +4.0 shift (calibrated for MS-MARCO Cross-Encoder logits)
         prob = 1.0 / (1.0 + math.exp(-max(-10.0, min(10.0, max_score + 4.0))))
         return max(0.0, min(1.0, float(prob)))
@@ -141,16 +148,14 @@ class BayesianConfidenceEngine:
     ) -> float:
         """
         Calculate fraction of grounded answer claims: supported_claims / total_claims.
-        If no claims are cited:
-          - Default 1.0 if evidence count >= 2
-          - Default 0.5 if evidence count < 2
+        If no claims are cited, default to 0.30.
         """
         if citations:
             grounded = sum(1 for c in citations if c.is_grounded)
             return float(grounded / len(citations))
         
         # Safe fallback if answer has no explicit citation tags
-        return 1.0 if len(evidence) >= 2 else 0.50
+        return 0.30
 
     def calculate_answer_consistency(
         self,

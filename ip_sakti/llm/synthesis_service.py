@@ -85,6 +85,22 @@ class AnswerSynthesisService:
                 agent_type=agent_type,
             )
 
+        # 0. Evidence Grounding Gate (Check if retrieval provided sufficiently relevant evidence)
+        faiss_scores = [c.faiss_score for c in evidence if c.faiss_score is not None]
+        bm25_scores = [c.bm25_score for c in evidence if c.bm25_score is not None and c.bm25_score > 0.0]
+        max_faiss = max(faiss_scores) if faiss_scores else 0.0
+
+        if not bm25_scores and max_faiss < 0.55:
+            logger.warning(
+                "Triggering safe abstention due to weak retrieval grounding (zero BM25 matches & low FAISS score)",
+                extra={"query_id": str(context.query_id), "max_faiss": max_faiss},
+            )
+            return self.abstention_handler.handle_abstention(
+                query_id=context.query_id,
+                reason="Retrieved evidence chunks are not sufficiently relevant to the user query.",
+                agent_type=agent_type,
+            )
+
         # 1. LLM Answer Generation
         raw_answer = self.llm_adapter.generate_answer(
             context=context,
