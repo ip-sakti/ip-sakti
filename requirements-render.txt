@@ -1,0 +1,33 @@
+# =============================================================================
+# IP-SAKTI Sahayak — Native Render Deployment Requirements
+# Lightweight runtime requirements for Gemini + FAISS + BM25 deployment.
+# =============================================================================
+
+# ── Web framework & server ───────────────────────────────────────────────────
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+
+# ── Data validation ───────────────────────────────────────────────────────────
+pydantic==2.9.0
+pydantic-settings==2.5.2
+
+# ── Configuration & environment ───────────────────────────────────────────────
+pyyaml==6.0.2
+python-dotenv==1.0.1
+
+# ── ML / Embeddings / Retrieval ───────────────────────────────────────────────
+faiss-cpu==1.15.1
+rank-bm25==0.2.2
+numpy==1.26.4
+
+# ── LLM — Google Gemini API ──────────────────────────────────────────────────
+google-generativeai==0.8.1
+
+# ── Multilingual — Language detection & translation ───────────────────────────
+langdetect==1.0.9
+deep-translator==1.11.4
+
+# ── Speech & Web Utilities ───────────────────────────────────────────────────
+gTTS==2.5.4
+python-multipart==0.0.32
+httpx==0.27.2
