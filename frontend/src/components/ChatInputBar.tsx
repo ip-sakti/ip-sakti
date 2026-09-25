@@ -17,15 +17,23 @@ interface VoiceLangInfo {
 
 const TEXT_LANGUAGES = [
   { code: 'en', label: 'English' },
+  { code: 'hi', label: 'हिन्दी' },
   { code: 'te', label: 'తెలుగు' },
   { code: 'kn', label: 'ಕನ್ನಡ' },
+  { code: 'ta', label: 'தமிழ்' },
+  { code: 'bn', label: 'বাংলা' },
+  { code: 'mr', label: 'मराठी' },
+  { code: 'ml', label: 'മലയാളം' },
+  { code: 'gu', label: 'ગુજરાતી' },
+  { code: 'pa', label: 'ਪੰਜਾਬੀ' },
+  { code: 'or', label: 'ଓଡ଼ਿଆ' },
+  { code: 'as', label: 'অসমীয়া' },
+  { code: 'ur', label: 'اردو' },
+  { code: 'sa', label: 'संस्कृतम्' },
 ];
 
 const VOICE_LANGUAGES = [
   { code: 'en-IN', langCode: 'en', label: 'English (EN)' },
-  { code: 'hi-IN', langCode: 'hi', label: 'Hindi (हिन्दी)' },
-  { code: 'te-IN', langCode: 'te', label: 'Telugu (తెలుగు)' },
-  { code: 'kn-IN', langCode: 'kn', label: 'Kannada (ಕನ್ನಡ)' },
 ];
 
 const LANG_NAME_MAP: Record<string, string> = {
@@ -33,6 +41,16 @@ const LANG_NAME_MAP: Record<string, string> = {
   hi: 'Hindi',
   te: 'Telugu',
   kn: 'Kannada',
+  ta: 'Tamil',
+  bn: 'Bengali',
+  mr: 'Marathi',
+  ml: 'Malayalam',
+  gu: 'Gujarati',
+  pa: 'Punjabi',
+  or: 'Odia',
+  as: 'Assamese',
+  ur: 'Urdu',
+  sa: 'Sanskrit',
 };
 
 export default function ChatInputBar({ onSendMessage, isLoading = false }: ChatInputBarProps) {
@@ -385,9 +403,15 @@ export default function ChatInputBar({ onSendMessage, isLoading = false }: ChatI
             <Globe className="w-3.5 h-3.5 text-[#385246] hidden sm:inline" />
             <select
               value={textLang}
-              onChange={(e) => setTextLang(e.target.value)}
+              onChange={(e) => {
+                const newLang = e.target.value;
+                setTextLang(newLang);
+                if (newLang !== 'en' && (isRecording || isTranscribing)) {
+                  cancelRecording();
+                }
+              }}
               disabled={isLoading || isRecording || isTranscribing}
-              title="Select query language (English / తెలుగు / ಕನ್ನಡ)"
+              title="Select query language"
               aria-label="Select query language"
               className="h-9 text-xs font-semibold text-[#003E29] bg-[#EAF2E6] border border-[#C8D7C2] hover:border-[#003E29] rounded-lg px-2 py-1 focus:outline-none cursor-pointer shrink-0 transition-colors shadow-2xs"
             >
@@ -399,65 +423,54 @@ export default function ChatInputBar({ onSendMessage, isLoading = false }: ChatI
             </select>
           </div>
 
-          {/* Voice Language Selector Dropdown */}
-          <select
-            value={selectedLang}
-            onChange={(e) => setSelectedLang(e.target.value)}
-            disabled={isRecording || isTranscribing || isLoading}
-            title="Select voice recording language"
-            aria-label="Select voice language"
-            className="h-9 text-xs font-medium text-[#003E29] bg-[#F0F5EE] border border-[#C8D7C2] hover:border-[#003E29] rounded-lg px-2 py-1 focus:outline-none cursor-pointer shrink-0 transition-colors"
-          >
-            {VOICE_LANGUAGES.map((lang) => (
-              <option key={lang.code} value={lang.code}>
-                {lang.label}
-              </option>
-            ))}
-          </select>
+          {/* Voice Input & Cancel Buttons (English text queries only) */}
+          {textLang === 'en' && (
+            <>
+              {/* Cancel Recording Button */}
+              {isRecording && (
+                <button
+                  type="button"
+                  onClick={cancelRecording}
+                  title="Cancel recording & discard voice input"
+                  aria-label="Cancel voice recording"
+                  className="h-9 px-2.5 rounded-lg flex items-center justify-center gap-1 bg-stone-100 text-stone-600 hover:text-red-600 hover:bg-red-50 border border-stone-200 text-xs font-medium transition-all shrink-0 cursor-pointer"
+                >
+                  <XCircle className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Cancel</span>
+                </button>
+              )}
 
-          {/* Cancel Recording Button (Visible only during active recording) */}
-          {isRecording && (
-            <button
-              type="button"
-              onClick={cancelRecording}
-              title="Cancel recording & discard voice input"
-              aria-label="Cancel voice recording"
-              className="h-9 px-2.5 rounded-lg flex items-center justify-center gap-1 bg-stone-100 text-stone-600 hover:text-red-600 hover:bg-red-50 border border-stone-200 text-xs font-medium transition-all shrink-0 cursor-pointer"
-            >
-              <XCircle className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Cancel</span>
-            </button>
+              {/* Voice Input Mic Button */}
+              <button
+                type="button"
+                onClick={toggleRecording}
+                disabled={isLoading || isTranscribing}
+                title={isRecording ? 'Stop voice recording' : 'Start voice input (English)'}
+                aria-label={isRecording ? 'Stop voice recording' : 'Start voice input'}
+                className={`h-9 px-2.5 rounded-lg flex items-center justify-center gap-1.5 transition-all duration-200 shrink-0 cursor-pointer ${
+                  isRecording
+                    ? 'bg-red-50 text-red-600 border border-red-200 animate-pulse font-medium text-xs'
+                    : isTranscribing
+                    ? 'bg-[#F0F4EF] text-[#003E29] border border-[#C8D7C2]/60 cursor-wait'
+                    : 'text-[#385246] hover:text-[#003E29] hover:bg-[#E8EFE5] border border-transparent'
+                }`}
+              >
+                {isTranscribing ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-[#003E29]" />
+                    <span className="text-[11px] font-medium hidden sm:inline text-[#003E29]">Transcribing</span>
+                  </>
+                ) : isRecording ? (
+                  <>
+                    <Square className="w-3.5 h-3.5 fill-red-600 text-red-600" />
+                    <span className="text-[11px] font-semibold text-red-600">Stop ({formatSeconds(recordingTime)})</span>
+                  </>
+                ) : (
+                  <Mic className="w-4 h-4" />
+                )}
+              </button>
+            </>
           )}
-
-          {/* Voice Input / Stop Recording Mic Button */}
-          <button
-            type="button"
-            onClick={toggleRecording}
-            disabled={isLoading || isTranscribing}
-            title={isRecording ? 'Stop voice recording' : 'Start voice input'}
-            aria-label={isRecording ? 'Stop voice recording' : 'Start voice input'}
-            className={`h-9 px-2.5 rounded-lg flex items-center justify-center gap-1.5 transition-all duration-200 shrink-0 cursor-pointer ${
-              isRecording
-                ? 'bg-red-50 text-red-600 border border-red-200 animate-pulse font-medium text-xs'
-                : isTranscribing
-                ? 'bg-[#F0F4EF] text-[#003E29] border border-[#C8D7C2]/60 cursor-wait'
-                : 'text-[#385246] hover:text-[#003E29] hover:bg-[#E8EFE5] border border-transparent'
-            }`}
-          >
-            {isTranscribing ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin text-[#003E29]" />
-                <span className="text-[11px] font-medium hidden sm:inline text-[#003E29]">Transcribing</span>
-              </>
-            ) : isRecording ? (
-              <>
-                <Square className="w-3.5 h-3.5 fill-red-600 text-red-600" />
-                <span className="text-[11px] font-semibold text-red-600">Stop ({formatSeconds(recordingTime)})</span>
-              </>
-            ) : (
-              <Mic className="w-4 h-4" />
-            )}
-          </button>
 
           {/* Submit Search Button */}
           <button
@@ -474,22 +487,14 @@ export default function ChatInputBar({ onSendMessage, isLoading = false }: ChatI
           </button>
         </div>
 
-        {/* Multilingual Voice Language Badge Indicator */}
-        {voiceLangInfo && (
+        {/* Multilingual Voice Language Badge Indicator (English only) */}
+        {voiceLangInfo && textLang === 'en' && (
           <div className="mx-3 my-1 px-3 py-1.5 bg-[#F0F5EE] border border-[#C8D7C2] text-[#003E29] rounded-md text-xs flex items-center justify-between transition-all">
             <div className="flex items-center gap-2 overflow-hidden">
               <span className="px-1.5 py-0.5 bg-[#003E29] text-white rounded text-[10px] uppercase font-mono font-bold shrink-0">
                 {voiceLangInfo.code}
               </span>
               <span className="font-semibold shrink-0">Detected: {voiceLangInfo.name}</span>
-              {voiceLangInfo.translatedText && (
-                <>
-                  <span className="text-[#7C817A] shrink-0">•</span>
-                  <span className="italic text-[#385246] truncate">
-                    Translation: &quot;{voiceLangInfo.translatedText}&quot;
-                  </span>
-                </>
-              )}
             </div>
             <button
               type="button"
@@ -522,7 +527,7 @@ export default function ChatInputBar({ onSendMessage, isLoading = false }: ChatI
         <div className="flex items-center justify-between px-3 pt-1 pb-1 border-t border-[#C8D7C2]/40 text-[11px] text-[#7B9F8E]">
           <div className="flex items-center gap-1.5">
             <Globe className="w-3 h-3 text-[#385246]" />
-            <span>Multilingual Voice Input · Whisper Base & Web Speech API (English / Hindi / Telugu / Kannada)</span>
+            <span>Multilingual Text Queries · English Voice Input (Web Speech / Whisper Base)</span>
           </div>
           <div className="hidden sm:block">Press Enter ↵ to submit</div>
         </div>

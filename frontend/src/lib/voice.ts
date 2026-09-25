@@ -5,13 +5,8 @@
 
 const LANG_CODE_MAP: Record<string, string> = {
   en: 'en-IN',
-  hi: 'hi-IN',
-  te: 'te-IN',
-  kn: 'kn-IN',
   'en-in': 'en-IN',
-  'hi-in': 'hi-IN',
-  'te-in': 'te-IN',
-  'kn-in': 'kn-IN',
+  'en-us': 'en-US',
 };
 
 /**
@@ -52,34 +47,26 @@ export function isSpeaking(): boolean {
 }
 
 /**
- * Retrieve best available voice for requested BCP-47 language code (en-IN, hi-IN, te-IN, kn-IN).
+ * Retrieve best available voice for requested BCP-47 language code (en-IN).
  */
 export function getVoiceForLanguage(langCode: string): SpeechSynthesisVoice | null {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
     return null;
   }
 
-  const targetLang = LANG_CODE_MAP[langCode.toLowerCase()] || langCode;
-  const targetPrefix = targetLang.split('-')[0].toLowerCase();
+  const targetLang = LANG_CODE_MAP[langCode.toLowerCase()] || 'en-IN';
   const voices = window.speechSynthesis.getVoices();
 
   if (!voices || voices.length === 0) return null;
 
-  // 1. Exact BCP-47 match (e.g. te-IN)
+  // 1. Exact BCP-47 match (e.g. en-IN)
   let best = voices.find(
     (v) => v.lang.toLowerCase().replace('_', '-') === targetLang.toLowerCase()
   );
 
-  // 2. Exact prefix match (e.g. te)
+  // 2. Exact prefix match (e.g. en)
   if (!best) {
-    best = voices.find((v) => v.lang.toLowerCase().startsWith(targetPrefix));
-  }
-
-  // 3. Fallback to any Indian voice or default voice
-  if (!best && targetPrefix !== 'en') {
-    best = voices.find(
-      (v) => v.lang.toLowerCase().includes('in') || v.lang.toLowerCase().startsWith('en')
-    );
+    best = voices.find((v) => v.lang.toLowerCase().startsWith('en'));
   }
 
   return best || voices[0] || null;
@@ -94,11 +81,18 @@ interface SpeakOptions {
 }
 
 /**
- * Speak text aloud using browser Web Speech API.
+ * Speak text aloud using browser Web Speech API (English only).
  */
 export function speakText({ text, lang = 'en', onStart, onEnd, onError }: SpeakOptions): void {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
     console.warn('SpeechSynthesis API is not supported in this environment.');
+    if (onEnd) onEnd();
+    return;
+  }
+
+  const normLang = (lang || 'en').toLowerCase().split('-')[0];
+  if (normLang !== 'en') {
+    // English-only policy: Non-English text TTS is disabled
     if (onEnd) onEnd();
     return;
   }

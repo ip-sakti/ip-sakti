@@ -83,15 +83,17 @@ export default function AnswerWorkspace({
   const respLang = (response as any).language || detectTextLanguage(response.answer || '', 'en');
   const answerId = response.answer ? `${query}_${response.answer.slice(0, 50)}` : '';
 
-  // Automatic Speech Synthesis on NEW Answer (Runs ONCE per unique answer)
+  const targetLang = detectTextLanguage(response.answer || '', respLang);
+  const isEnglishAnswer = targetLang === 'en';
+
+  // Automatic Speech Synthesis on NEW Answer (English answers only)
   useEffect(() => {
-    if (answerId && lastSpokenIdRef.current !== answerId) {
+    if (answerId && lastSpokenIdRef.current !== answerId && isEnglishAnswer) {
       lastSpokenIdRef.current = answerId;
-      const targetLang = detectTextLanguage(response.answer || '', respLang);
 
       speakText({
         text: response.answer || '',
-        lang: targetLang,
+        lang: 'en',
         onStart: () => setIsSpeakingState(true),
         onEnd: () => setIsSpeakingState(false),
         onError: () => setIsSpeakingState(false),
@@ -102,17 +104,17 @@ export default function AnswerWorkspace({
       stopSpeaking();
       setIsSpeakingState(false);
     };
-  }, [answerId, response.answer, respLang, query]);
+  }, [answerId, response.answer, isEnglishAnswer, query]);
 
   const toggleSpeech = () => {
+    if (!isEnglishAnswer) return;
     if (isSpeakingState) {
       stopSpeaking();
       setIsSpeakingState(false);
     } else {
-      const targetLang = detectTextLanguage(response.answer || '', respLang);
       speakText({
         text: response.answer || '',
-        lang: targetLang,
+        lang: 'en',
         onStart: () => setIsSpeakingState(true),
         onEnd: () => setIsSpeakingState(false),
         onError: () => setIsSpeakingState(false),
@@ -240,30 +242,32 @@ export default function AnswerWorkspace({
             </div>
           </div>
 
-          {/* Accessible Speaker / Stop Control */}
-          <button
-            type="button"
-            onClick={toggleSpeech}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
-              isSpeakingState
-                ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100'
-                : 'bg-[#EEF3E4] hover:bg-[#E3EBD7] text-[#003E29] border-[#C8D7C2]'
-            }`}
-            title={isSpeakingState ? 'Stop reading answer aloud' : 'Read answer aloud'}
-            aria-label={isSpeakingState ? 'Stop reading answer' : 'Read answer'}
-          >
-            {isSpeakingState ? (
-              <>
-                <Square className="w-3.5 h-3.5 fill-red-600 text-red-600" />
-                <span>Stop</span>
-              </>
-            ) : (
-              <>
-                <Volume2 className="w-3.5 h-3.5 text-[#003E29]" />
-                <span>Speak</span>
-              </>
-            )}
-          </button>
+          {/* Accessible Speaker / Stop Control (English responses only) */}
+          {isEnglishAnswer && (
+            <button
+              type="button"
+              onClick={toggleSpeech}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+                isSpeakingState
+                  ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100'
+                  : 'bg-[#EEF3E4] hover:bg-[#E3EBD7] text-[#003E29] border-[#C8D7C2]'
+              }`}
+              title={isSpeakingState ? 'Stop reading answer aloud' : 'Read answer aloud (English)'}
+              aria-label={isSpeakingState ? 'Stop reading answer' : 'Read answer'}
+            >
+              {isSpeakingState ? (
+                <>
+                  <Square className="w-3.5 h-3.5 fill-red-600 text-red-600" />
+                  <span>Stop</span>
+                </>
+              ) : (
+                <>
+                  <Volume2 className="w-3.5 h-3.5 text-[#003E29]" />
+                  <span>Speak</span>
+                </>
+              )}
+            </button>
+          )}
         </div>
 
         <div className="text-sm text-[#1A2E26] leading-relaxed whitespace-pre-wrap font-sans-body">

@@ -51,15 +51,11 @@ except Exception as e:
 
 _WHISPER_MODEL = None
 _QUERY_TRANSLATOR = None
-_INDIC_ASR_PIPELINES = {}
 
-SUPPORTED_VOICE_LANGUAGES = {"en", "hi", "te", "kn"}
+SUPPORTED_VOICE_LANGUAGES = {"en"}
 
 LANG_CODE_MAP = {
     "en": "en", "eng": "en", "english": "en", "en-in": "en", "en-us": "en",
-    "hi": "hi", "hin": "hi", "hindi": "hi", "hi-in": "hi", "ur": "hi", "mr": "hi", "pa": "hi", "ne": "hi", "bh": "hi", "sd": "hi",
-    "te": "te", "tel": "te", "telugu": "te", "te-in": "te", "ta": "te", "si": "te",
-    "kn": "kn", "kan": "kn", "kannada": "kn", "kn-in": "kn", "ml": "kn",
 }
 
 COMMON_ENGLISH_KEYWORDS = {
@@ -74,7 +70,7 @@ COMMON_ENGLISH_KEYWORDS = {
 def get_whisper_model(model_name: str = "base"):
     """
     Lazy-load and return cached singleton instance of Whisper model.
-    Default: 'base' for high-accuracy CPU transcription & translation.
+    Default: 'base' for high-accuracy CPU transcription.
     """
     global _WHISPER_MODEL
     if _WHISPER_MODEL is None:
@@ -83,34 +79,6 @@ def get_whisper_model(model_name: str = "base"):
         _WHISPER_MODEL = whisper.load_model(model_name)
         logger.info(f"Whisper model '{model_name}' loaded successfully.")
     return _WHISPER_MODEL
-
-
-def get_indic_asr_pipeline(lang_code: str):
-    """
-    Lazy-load and return cached HuggingFace ASR pipeline for Telugu ('te') or Kannada ('kn').
-    Uses fine-tuned Indian ASR models:
-    - 'te': vasista22/whisper-telugu-base
-    - 'kn': vasista22/whisper-kannada-base
-    """
-    global _INDIC_ASR_PIPELINES
-    if lang_code not in _INDIC_ASR_PIPELINES:
-        import torch
-        from transformers import pipeline
-        
-        model_name = "vasista22/whisper-telugu-base" if lang_code == "te" else "vasista22/whisper-kannada-base"
-        logger.info(f"Loading Indic ASR pipeline for '{lang_code}' using model '{model_name}'...")
-        
-        cache_dir = os.environ.get("HF_HOME") or os.path.join(os.path.expanduser("~"), ".cache", "huggingface")
-        pipe = pipeline(
-            "automatic-speech-recognition",
-            model=model_name,
-            dtype=torch.float32,
-            device="cpu",
-            model_kwargs={"cache_dir": cache_dir}
-        )
-        _INDIC_ASR_PIPELINES[lang_code] = pipe
-        logger.info(f"Loaded Indic ASR pipeline for '{lang_code}'.")
-    return _INDIC_ASR_PIPELINES[lang_code]
 
 
 def get_query_translator():
@@ -234,6 +202,18 @@ def transcribe_audio_bytes(
             "error": str | None
         }
     """
+    # ── Authoritative Target Language Selection ───────────────────────────────
+    if target_lang:
+        hint_clean = LANG_CODE_MAP.get(target_lang.lower().strip(), target_lang.lower().strip())
+        if hint_clean != "en":
+            logger.info(f"Non-English voice requested ('{target_lang}'). Rejecting without model loading.")
+            return {
+                "transcript": "",
+                "language": "unsupported",
+                "translated_text": None,
+                "error": "Voice input is supported in English only."
+            }
+
     if not audio_bytes or len(audio_bytes) < 100:
         return {
             "transcript": "",
@@ -258,66 +238,30 @@ def transcribe_audio_bytes(
     try:
         # ── Audio Normalization (Mono 16 kHz WAV) ─────────────────────────────────
         norm_wav_path = normalize_audio_to_wav16k(tmp_path)
-
-        # ── Authoritative Target Language Selection ───────────────────────────────
         norm_lang = "en"
-        if target_lang:
-            hint_clean = LANG_CODE_MAP.get(target_lang.lower().strip(), target_lang.lower().strip())
-            if hint_clean in SUPPORTED_VOICE_LANGUAGES:
-                norm_lang = hint_clean
-                logger.info(f"Authoritative user-selected STT language: '{norm_lang}'")
-        else:
-            try:
-                import whisper
-                model = get_whisper_model("base")
-                audio = whisper.load_audio(norm_wav_path)
-                if len(audio) > 0:
-                    audio_padded = whisper.pad_or_trim(audio)
-                    mel = whisper.log_mel_spectrogram(audio_padded).to(model.device)
-                    _, probs = model.detect_language(mel)
-                    top_lang = max(probs, key=probs.get)
-                    raw_lang = str(top_lang).lower().strip()
-                    norm_lang = LANG_CODE_MAP.get(raw_lang, raw_lang)
-                    if norm_lang not in SUPPORTED_VOICE_LANGUAGES:
-                        norm_lang = "en"
-            except Exception as det_err:
-                logger.warning(f"Language detection fallback error: {det_err}")
-                norm_lang = "en"
 
-        # ── Language Router STT Execution ──────────────────────────────────────────
+        # ── English STT Execution via Whisper Base ───────────────────────────────
         asr_engine = "Whisper Base"
-        if norm_lang in {"te", "kn"}:
-            model_name = "vasista22/whisper-telugu-base" if norm_lang == "te" else "vasista22/whisper-kannada-base"
-            asr_engine = f"IndicConformer / Fine-tuned ASR ({model_name})"
-            logger.info(f"Routing STT to Indic ASR pipeline: lang={norm_lang}, model={model_name}")
-            
-            pipe = get_indic_asr_pipeline(norm_lang)
-            pipe_res = pipe(norm_wav_path)
-            raw_text = pipe_res.get("text", "").strip() if isinstance(pipe_res, dict) else str(pipe_res).strip()
-        else:
-            asr_engine = "Whisper Base"
-            logger.info(f"Routing STT to Whisper Base: lang={norm_lang}")
-            model = get_whisper_model("base")
-            stt_kwargs = {
-                "fp16": False,
-                "task": "transcribe",
-                "language": norm_lang,
-                "temperature": 0.0,
-                "condition_on_previous_text": False,
-                "no_speech_threshold": 0.6,
-                "logprob_threshold": -1.0,
-                "compression_ratio_threshold": 2.4
-            }
-            if norm_lang == "hi":
-                stt_kwargs["initial_prompt"] = "आयुर्वेदिक दवा बनाने के लिए क्या लाइसेंस और नियम चाहिए?"
+        logger.info("Routing STT to Whisper Base: lang=en")
+        model = get_whisper_model("base")
+        stt_kwargs = {
+            "fp16": False,
+            "task": "transcribe",
+            "language": "en",
+            "temperature": 0.0,
+            "condition_on_previous_text": False,
+            "no_speech_threshold": 0.6,
+            "logprob_threshold": -1.0,
+            "compression_ratio_threshold": 2.4
+        }
 
-            stt_result = model.transcribe(
-                norm_wav_path,
-                **stt_kwargs
-            )
-            raw_text = stt_result.get("text", "").strip()
+        stt_result = model.transcribe(
+            norm_wav_path,
+            **stt_kwargs
+        )
+        raw_text = stt_result.get("text", "").strip()
 
-        logger.info(f"STT decoded (engine={asr_engine}, lang={norm_lang}): '{raw_text}'")
+        logger.info(f"STT decoded (engine={asr_engine}, lang=en): '{raw_text}'")
 
         # Reject empty or no-speech audio
         if not raw_text:
