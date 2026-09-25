@@ -228,36 +228,64 @@ class MultilingualService:
             )
         except (TranslationError, UnsupportedLanguageError) as exc:
             logger.warning(
-                "Response translation failed; returning original English answer",
+                "Response translation failed",
                 extra={
                     "target_language": context.effective_language,
                     "error": str(exc),
                 },
             )
             from ip_sakti.models.multilingual import TranslationResult
-            response_translation = TranslationResult(
-                source_language=self._registry.retrieval_language,
-                target_language=context.effective_language,
-                original_text=response_text,
-                translated_text=response_text,
-                was_translated=False,
-            )
+            if context.effective_language in {"te", "kn"}:
+                localized_err = (
+                    "క్షమించండి, అనువాద సేవ ప్రస్తుతం అందుబాటులో లేదు. దయచేసి కాసేపటి తర్వాత మళ్లీ ప్రయత్నించండి."
+                    if context.effective_language == "te"
+                    else "ಕ್ಷಮಿಸಿ, ಅನುವಾದ ಸೇವೆ ಪ್ರಸ್ತುತ ಲಭ್ಯವಿಲ್ಲ. ದಯವಿಟ್ಟು ಸ್ವಲ್ಪ ಸಮಯದ ನಂತರ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ."
+                )
+                response_translation = TranslationResult(
+                    source_language=self._registry.retrieval_language,
+                    target_language=context.effective_language,
+                    original_text=response_text,
+                    translated_text=localized_err,
+                    was_translated=True,
+                )
+            else:
+                response_translation = TranslationResult(
+                    source_language=self._registry.retrieval_language,
+                    target_language=context.effective_language,
+                    original_text=response_text,
+                    translated_text=response_text,
+                    was_translated=False,
+                )
         except Exception as exc:
             logger.error(
-                "Unexpected error during response translation; returning original English answer",
+                "Unexpected error during response translation",
                 extra={
                     "target_language": context.effective_language,
                     "error": str(exc),
                 },
             )
             from ip_sakti.models.multilingual import TranslationResult
-            response_translation = TranslationResult(
-                source_language=self._registry.retrieval_language,
-                target_language=context.effective_language,
-                original_text=response_text,
-                translated_text=response_text,
-                was_translated=False,
-            )
+            if context.effective_language in {"te", "kn"}:
+                localized_err = (
+                    "క్షమించండి, అనువాద సేవ ప్రస్తుతం అందుబాటులో లేదు. దయచేసి కాసేపటి తర్వాత మళ్లీ ప్రయత్నించండి."
+                    if context.effective_language == "te"
+                    else "ಕ್ಷಮಿಸಿ, ಅನುವಾದ ಸೇವೆ ಪ್ರಸ್ತುತ ಲಭ್ಯವಿಲ್ಲ. ದಯವಿಟ್ಟು ಸ್ವಲ್ಪ ಸಮಯದ ನಂತರ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ."
+                )
+                response_translation = TranslationResult(
+                    source_language=self._registry.retrieval_language,
+                    target_language=context.effective_language,
+                    original_text=response_text,
+                    translated_text=localized_err,
+                    was_translated=True,
+                )
+            else:
+                response_translation = TranslationResult(
+                    source_language=self._registry.retrieval_language,
+                    target_language=context.effective_language,
+                    original_text=response_text,
+                    translated_text=response_text,
+                    was_translated=False,
+                )
 
         logger.debug(
             "Response translated",

@@ -48,11 +48,11 @@ class GeminiLLMAdapter:
     ) -> None:
         """Initialise Gemini LLM adapter."""
         cfg = get_settings()
-        self.model_name = (
-            model_name
-            or os.getenv("GEMINI_MODEL")
-            or cfg.get("models", {}).get("llm_model", "gemini-1.5-flash")
-        )
+        cand = model_name or cfg.get("models", {}).get("llm_model") or os.getenv("GEMINI_MODEL")
+        if cand and any(x in cand.lower() for x in ["tts", "audio", "image"]):
+            cand = "gemini-3.5-flash-lite"
+
+        self.model_name = cand or "gemini-3.5-flash-lite"
         self.api_key = api_key or os.getenv("GEMINI_API_KEY")
 
         self.system_prompt = self._load_system_prompt()

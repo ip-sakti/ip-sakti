@@ -88,7 +88,7 @@ export default function DashboardPage() {
     loadDataAndRestore();
   }, [user?.id]);
 
-  const handleSendMessage = async (queryText: string) => {
+  const handleSendMessage = async (queryText: string, lang?: string) => {
     if (!queryText.trim() || isLoading) return;
 
     setCurrentQuery(queryText);
@@ -116,7 +116,7 @@ export default function DashboardPage() {
     }, 600);
 
     try {
-      const response = await sendQueryToAPI(queryText);
+      const response = await sendQueryToAPI(queryText, lang);
 
       clearInterval(interval);
 

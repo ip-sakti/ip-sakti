@@ -35,6 +35,7 @@ from ip_sakti.multilingual.exceptions import (
     TranslationError,
     UnsupportedLanguageError,
 )
+from ip_sakti.multilingual.gemini_translator import GeminiTranslator
 from ip_sakti.multilingual.language_registry import (
     LanguageRegistry,
     get_language_registry,
@@ -69,6 +70,7 @@ class QueryTranslator:
         """Initialise the translator."""
 
         self._registry = registry or get_language_registry()
+        self._gemini_translator = GeminiTranslator()
 
         logger.debug(
             "QueryTranslator initialised",
@@ -188,6 +190,25 @@ class QueryTranslator:
                 was_translated=True,
             )
 
+        # Remote Gemini translator priority for Telugu and Kannada queries
+        if source_language in {"te", "kn"} and self._gemini_translator.is_available():
+            try:
+                gemini_q = self._gemini_translator.translate_query_to_english(
+                    text=clean_input,
+                    source_lang=source_language,
+                )
+                return TranslationResult(
+                    source_language=source_language,
+                    target_language=target_language,
+                    original_text=text,
+                    translated_text=gemini_q,
+                    was_translated=True,
+                )
+            except Exception as exc:
+                logger.warning(
+                    f"Gemini query translation failed ({source_language} -> {target_language}): {exc}. Trying fallback..."
+                )
+
         translated_text = self._call_google_translate(
             text=text,
             source=source_language,
@@ -234,6 +255,25 @@ class QueryTranslator:
                 translated_text=text,
                 was_translated=False,
             )
+
+        # Remote Gemini translator priority for Telugu and Kannada answers
+        if target_language in {"te", "kn"} and self._gemini_translator.is_available():
+            try:
+                gemini_ans = self._gemini_translator.translate_answer(
+                    text=text,
+                    target_lang=target_language,
+                )
+                return TranslationResult(
+                    source_language=source_language,
+                    target_language=target_language,
+                    original_text=text,
+                    translated_text=gemini_ans,
+                    was_translated=True,
+                )
+            except Exception as exc:
+                logger.warning(
+                    f"Gemini answer translation failed ({source_language} -> {target_language}): {exc}. Trying fallback..."
+                )
 
         # --------------------------------------------------------------
         # Extract citation markers

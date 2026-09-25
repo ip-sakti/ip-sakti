@@ -204,8 +204,8 @@ export async function processQueryAPI(payload: APIQueryPayload): Promise<APIQuer
   }
 }
 
-export async function sendQueryToAPI(rawQuery: string): Promise<APIQueryResponse> {
-  return processQueryAPI({ raw_query: rawQuery });
+export async function sendQueryToAPI(rawQuery: string, userLanguage?: string): Promise<APIQueryResponse> {
+  return processQueryAPI({ raw_query: rawQuery, user_language: userLanguage || 'en' });
 }
 
 export async function checkHealthAPI(): Promise<boolean> {

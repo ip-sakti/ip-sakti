@@ -5,7 +5,7 @@ import { Search, Send, Loader2, Globe, Mic, Square, AlertCircle, XCircle } from 
 import { transcribeAudio } from '@/lib/api';
 
 interface ChatInputBarProps {
-  onSendMessage: (query: string) => void;
+  onSendMessage: (query: string, language?: string) => void;
   isLoading?: boolean;
 }
 
@@ -14,6 +14,12 @@ interface VoiceLangInfo {
   name: string;
   translatedText?: string | null;
 }
+
+const TEXT_LANGUAGES = [
+  { code: 'en', label: 'English' },
+  { code: 'te', label: 'తెలుగు' },
+  { code: 'kn', label: 'ಕನ್ನಡ' },
+];
 
 const VOICE_LANGUAGES = [
   { code: 'en-IN', langCode: 'en', label: 'English (EN)' },
@@ -31,6 +37,7 @@ const LANG_NAME_MAP: Record<string, string> = {
 
 export default function ChatInputBar({ onSendMessage, isLoading = false }: ChatInputBarProps) {
   const [query, setQuery] = useState('');
+  const [textLang, setTextLang] = useState<string>('en');
   const [selectedLang, setSelectedLang] = useState<string>('en-IN');
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
@@ -331,7 +338,7 @@ export default function ChatInputBar({ onSendMessage, isLoading = false }: ChatI
   const handleSubmit = () => {
     const trimmed = query.trim();
     if (!trimmed || isLoading || isRecording || isTranscribing) return;
-    onSendMessage(trimmed);
+    onSendMessage(trimmed, textLang);
     setQuery('');
     setVoiceLangInfo(null);
   };
@@ -368,17 +375,36 @@ export default function ChatInputBar({ onSendMessage, isLoading = false }: ChatI
                 ? `🔴 Listening (${activeLangObj.label})... (${formatSeconds(recordingTime)})`
                 : isTranscribing
                 ? 'Processing voice query (Whisper base)...'
-                : 'Ask about Traditional Knowledge, patents, AYUSH or ABS... (English / हिन्दी / తెలుగు / ಕನ್ನಡ)'
+                : 'Ask about Traditional Knowledge, patents, AYUSH or ABS... (English / తెలుగు / ಕನ್ನಡ)'
             }
             className="flex-1 bg-transparent py-2.5 text-sm text-[#003E29] placeholder-[#7C817A] focus:outline-none font-sans-body"
           />
+
+          {/* Text Query Language Selector */}
+          <div className="flex items-center gap-1 shrink-0">
+            <Globe className="w-3.5 h-3.5 text-[#385246] hidden sm:inline" />
+            <select
+              value={textLang}
+              onChange={(e) => setTextLang(e.target.value)}
+              disabled={isLoading || isRecording || isTranscribing}
+              title="Select query language (English / తెలుగు / ಕನ್ನಡ)"
+              aria-label="Select query language"
+              className="h-9 text-xs font-semibold text-[#003E29] bg-[#EAF2E6] border border-[#C8D7C2] hover:border-[#003E29] rounded-lg px-2 py-1 focus:outline-none cursor-pointer shrink-0 transition-colors shadow-2xs"
+            >
+              {TEXT_LANGUAGES.map((lang) => (
+                <option key={lang.code} value={lang.code}>
+                  {lang.label}
+                </option>
+              ))}
+            </select>
+          </div>
 
           {/* Voice Language Selector Dropdown */}
           <select
             value={selectedLang}
             onChange={(e) => setSelectedLang(e.target.value)}
             disabled={isRecording || isTranscribing || isLoading}
-            title="Select voice language"
+            title="Select voice recording language"
             aria-label="Select voice language"
             className="h-9 text-xs font-medium text-[#003E29] bg-[#F0F5EE] border border-[#C8D7C2] hover:border-[#003E29] rounded-lg px-2 py-1 focus:outline-none cursor-pointer shrink-0 transition-colors"
           >

@@ -195,10 +195,9 @@ class PipelineCoordinator:
             }
         )
 
-        # Step 7: Response Translation (if user language is non-English and not an abstention)
+        # Step 7: Response Translation (translates answers and abstentions for non-English queries)
         if (
-            not final_response.is_abstention
-            and m_ctx.effective_language != "en"
+            m_ctx.effective_language != "en"
             and final_response.answer
         ):
             try:
