@@ -231,7 +231,7 @@ export default function AnswerWorkspace({
           </span>
           <span className="text-gray-300">→</span>
           <span className="flex items-center gap-1 bg-emerald-50 text-emerald-900 px-2 py-1 rounded border border-emerald-200">
-            <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Cross-Encoder Reranking
+            <CheckCircle2 className="w-3 h-3 text-emerald-600" /> RRF Fusion
           </span>
           <span className="text-gray-300">→</span>
           <span className="flex items-center gap-1 bg-emerald-50 text-emerald-900 px-2 py-1 rounded border border-emerald-200">
@@ -325,7 +325,7 @@ export default function AnswerWorkspace({
             <h3 className="font-serif-heading text-xl font-bold text-[#003E29]">
               Grounded Source Evidence ({response.evidence.length})
             </h3>
-            <span className="text-xs text-[#385246]">Cross-Encoder Verified</span>
+            <span className="text-xs text-[#385246]">RRF Fusion Grounded</span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
