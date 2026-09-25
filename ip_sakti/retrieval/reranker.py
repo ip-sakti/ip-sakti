@@ -20,8 +20,6 @@ if "HF_HOME" in os.environ and not Path(os.environ["HF_HOME"].split(":")[0] + ":
 if "SENTENCE_TRANSFORMERS_HOME" in os.environ and not Path(os.environ["SENTENCE_TRANSFORMERS_HOME"].split(":")[0] + ":\\").exists():
     os.environ["SENTENCE_TRANSFORMERS_HOME"] = str(Path.home() / ".cache" / "torch" / "sentence_transformers")
 
-from sentence_transformers import CrossEncoder
-
 from ip_sakti.retrieval.exceptions import RetrievalError
 from ip_sakti.retrieval.fusion import FusedCandidate
 from ip_sakti.utils.config import get_settings
@@ -51,16 +49,18 @@ class CrossEncoderReranker:
                 "cross-encoder/ms-marco-MiniLM-L-6-v2",
             )
 
-        self._model: CrossEncoder | None = None
+        self._model: Any | None = None
         logger.debug(
             "CrossEncoderReranker initialised",
             extra={"model_name": self.model_name},
         )
 
-    def _get_model(self) -> CrossEncoder:
+    def _get_model(self) -> Any:
         """Lazy load the CrossEncoder model on first use."""
         if self._model is None:
             try:
+                from sentence_transformers import CrossEncoder
+
                 logger.info(
                     "Loading CrossEncoder model",
                     extra={"model_name": self.model_name},

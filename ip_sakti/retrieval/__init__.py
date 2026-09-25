@@ -21,7 +21,6 @@ Public API
 
 from ip_sakti.retrieval.bm25_store import BM25SparseStore
 from ip_sakti.retrieval.chunker import DocumentChunker
-from ip_sakti.retrieval.embeddings import EmbeddingGenerator
 from ip_sakti.retrieval.exceptions import (
     CorruptIndexError,
     EmptyKnowledgeBaseError,
@@ -31,9 +30,19 @@ from ip_sakti.retrieval.exceptions import (
 from ip_sakti.retrieval.faiss_store import FAISSVectorStore
 from ip_sakti.retrieval.fusion import FusedCandidate, ReciprocalRankFusion
 from ip_sakti.retrieval.pipeline import HybridRAGPipeline
-from ip_sakti.retrieval.reranker import CrossEncoderReranker
 
 from ip_sakti.retrieval.sources import AuthorisedSource, SourceRegistry
+
+
+def __getattr__(name: str):
+    if name == "EmbeddingGenerator":
+        from ip_sakti.retrieval.embeddings import EmbeddingGenerator
+        return EmbeddingGenerator
+    if name == "CrossEncoderReranker":
+        from ip_sakti.retrieval.reranker import CrossEncoderReranker
+        return CrossEncoderReranker
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
 
 __all__ = [
     "AuthorisedSource",
@@ -51,3 +60,4 @@ __all__ = [
     "RetrievalError",
     "SourceRegistry",
 ]
+

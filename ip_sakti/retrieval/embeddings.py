@@ -24,8 +24,6 @@ if "HF_HOME" in os.environ and not Path(os.environ["HF_HOME"].split(":")[0] + ":
 if "SENTENCE_TRANSFORMERS_HOME" in os.environ and not Path(os.environ["SENTENCE_TRANSFORMERS_HOME"].split(":")[0] + ":\\").exists():
     os.environ["SENTENCE_TRANSFORMERS_HOME"] = str(Path.home() / ".cache" / "torch" / "sentence_transformers")
 
-from sentence_transformers import SentenceTransformer
-
 from ip_sakti.retrieval.exceptions import RetrievalError
 from ip_sakti.utils.config import get_settings
 
@@ -34,55 +32,50 @@ logger = logging.getLogger(__name__)
 
 class EmbeddingGenerator:
     """
-    Generates normalized dense embeddings using SentenceTransformer.
+    Generates normalized dense embeddings using Google Gemini Embedding API
+    (models/gemini-embedding-2 with 768 dimensions) or lazy-loaded SentenceTransformer.
 
     Parameters
     ----------
     model_name :
-        HuggingFace model identifier. Defaults to models.embedding_model
-        from config/settings.yaml.
+        HuggingFace model identifier or Gemini model string.
     """
 
     def __init__(self, model_name: str | None = None) -> None:
         """Initialise embedding model using config or explicit parameter."""
-        if model_name is not None:
-            self.model_name = model_name
-        else:
-            cfg = get_settings()
-            self.model_name = cfg.get("models", {}).get(
-                "embedding_model",
-                "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
-            )
-
-        self._model: SentenceTransformer | None = None
+        cfg = get_settings()
+        self.gemini_api_key = os.getenv("GEMINI_API_KEY")
+        self.model_name = (
+            model_name
+            or cfg.get("models", {}).get("embedding_model", "models/gemini-embedding-2")
+        )
+        self.use_gemini = bool(self.gemini_api_key)
+        self._model: Any | None = None
         logger.debug(
             "EmbeddingGenerator initialised",
-            extra={"model_name": self.model_name},
+            extra={"model_name": self.model_name, "use_gemini": self.use_gemini},
         )
 
-    def _get_model(self) -> SentenceTransformer:
-        """Lazy load the SentenceTransformer model on first use."""
+    def _get_model(self) -> Any:
+        """Lazy load the SentenceTransformer model on first use if local fallback required."""
         if self._model is None:
             try:
+                from sentence_transformers import SentenceTransformer
+
                 logger.info(
                     "Loading SentenceTransformer model",
                     extra={"model_name": self.model_name},
                 )
-                self._model = SentenceTransformer(self.model_name)
+                self._model = SentenceTransformer("sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
             except Exception as exc:
                 raise RetrievalError(
-                    f"Failed to load embedding model {self.model_name!r}: {exc}. "
-                    f"This model is downloaded from HuggingFace on first use. "
-                    f"For offline environments, pre-download it with: "
-                    f"python -c \"from sentence_transformers import SentenceTransformer; "
-                    f"SentenceTransformer(\'{self.model_name}\')\" "
-                    f"or set SENTENCE_TRANSFORMERS_HOME to a local cache directory."
+                    f"Failed to load embedding model {self.model_name!r}: {exc}."
                 ) from exc
         return self._model
 
     def embed_texts(self, texts: Sequence[str]) -> np.ndarray:
         """
-        Generate L2-normalized float32 embeddings for a sequence of text strings.
+        Generate L2-normalized float32 embeddings for a sequence of document strings.
 
         Parameters
         ----------
@@ -93,15 +86,37 @@ class EmbeddingGenerator:
         -------
         np.ndarray
             2D float32 numpy array of shape (len(texts), dimension).
-            Empty array of shape (0, dim) if texts is empty.
         """
         if not texts:
-            dim = self.dimension if self._model is not None else 0
+            dim = self.dimension
             return np.empty((0, dim), dtype=np.float32)
 
         clean_texts = [t.strip() for t in texts]
-        model = self._get_model()
 
+        if self.use_gemini:
+            try:
+                import google.generativeai as genai
+
+                genai.configure(api_key=self.gemini_api_key)
+                vectors = []
+                for text in clean_texts:
+                    res = genai.embed_content(
+                        model="models/gemini-embedding-2",
+                        content=text,
+                        task_type="retrieval_document",
+                        output_dimensionality=768,
+                    )
+                    v = np.array(res["embedding"], dtype=np.float32)
+                    norm = np.linalg.norm(v)
+                    if norm > 0:
+                        v = v / norm
+                    vectors.append(v)
+                return np.array(vectors, dtype=np.float32)
+            except Exception as exc:
+                logger.warning(f"Gemini document embedding failed: {exc}. Falling back to SentenceTransformer.")
+                self.use_gemini = False
+
+        model = self._get_model()
         try:
             embeddings = model.encode(
                 clean_texts,
@@ -133,12 +148,34 @@ class EmbeddingGenerator:
         if not stripped:
             raise RetrievalError("Cannot generate embedding for empty query.")
 
+        if self.use_gemini:
+            try:
+                import google.generativeai as genai
+
+                genai.configure(api_key=self.gemini_api_key)
+                res = genai.embed_content(
+                    model="models/gemini-embedding-2",
+                    content=stripped,
+                    task_type="retrieval_query",
+                    output_dimensionality=768,
+                )
+                v = np.array(res["embedding"], dtype=np.float32)
+                norm = np.linalg.norm(v)
+                if norm > 0:
+                    v = v / norm
+                return v
+            except Exception as exc:
+                logger.warning(f"Gemini query embedding failed: {exc}. Falling back to SentenceTransformer.")
+                self.use_gemini = False
+
         arr = self.embed_texts([stripped])
         return arr[0]
 
     @property
     def dimension(self) -> int:
         """Return the vector embedding dimension of the loaded model."""
+        if self.use_gemini:
+            return 768
         model = self._get_model()
         dim = model.get_sentence_embedding_dimension()
         if dim is None:
@@ -146,3 +183,4 @@ class EmbeddingGenerator:
                 f"Embedding model {self.model_name!r} did not return a valid dimension."
             )
         return int(dim)
+

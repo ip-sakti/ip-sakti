@@ -84,7 +84,10 @@ class HybridRAGPipeline:
         self.rerank_top_k: int = int(retrieval_cfg.get("rerank_top_k", 5))
 
         paths_cfg = cfg.get("paths", {})
-        self.index_dir: Path = Path(paths_cfg.get("index_dir", "indexes/"))
+        configured_dir = Path(paths_cfg.get("index_dir", "indexes/version/"))
+        if configured_dir == Path("indexes/") and Path("indexes/version/faiss.index").exists():
+            configured_dir = Path("indexes/version/")
+        self.index_dir: Path = configured_dir
 
     @property
     def is_built(self) -> bool:
@@ -176,32 +179,6 @@ class HybridRAGPipeline:
     ) -> list[EvidenceChunk]:
         """
         Run the complete Hybrid RAG pipeline for a normalised/translated query.
-
-        Steps
-        -----
-        1. Check query text & index availability.
-        2. Execute dense search (FAISS) & sparse search (BM25).
-        3. Fuse candidate rankings (RRF).
-        4. Rerank candidates with Cross-Encoder.
-        5. Package top candidates into EvidenceChunk Pydantic models with provenance.
-
-        Parameters
-        ----------
-        query_text :
-            The normalised/translated English query text from Stage 2 (or agent-enriched query).
-        faiss_top_k :
-            Optional override for dense retrieval candidate limit.
-        bm25_top_k :
-            Optional override for sparse retrieval candidate limit.
-        rerank_top_k :
-            Optional override for final evidence count.
-        original_query :
-            Optional raw/translated user query text to use for cross-encoder evaluation.
-
-        Returns
-        -------
-        list[EvidenceChunk]
-            Top reranked evidence chunks carrying provenance metadata and scores.
         """
         clean_query = query_text.strip()
         if not clean_query:
@@ -240,22 +217,27 @@ class HybridRAGPipeline:
         if not fused_candidates:
             return []
 
-        # 4. Cross-Encoder reranking (evaluated against clean user query)
-        eval_query = original_query.strip() if (original_query and original_query.strip()) else clean_query
-        try:
-            reranked = self.reranker.rerank(
-                query=eval_query,
-                candidates=fused_candidates,
-                top_k=r_top_k,
-            )
-
-        except Exception as exc:
-            logger.error(f"CrossEncoder reranking failed: {exc}")
-            # Fall back to top fused candidates without reranking if reranker fails
+        # 4. Cross-Encoder reranking (bypassed when using remote embeddings to avoid loading PyTorch)
+        use_gemini = getattr(self.embedding_generator, "use_gemini", False)
+        if use_gemini or self.reranker is None:
             reranked = [
                 (cand, cand.rrf_score)
                 for cand in fused_candidates[:r_top_k]
             ]
+        else:
+            eval_query = original_query.strip() if (original_query and original_query.strip()) else clean_query
+            try:
+                reranked = self.reranker.rerank(
+                    query=eval_query,
+                    candidates=fused_candidates,
+                    top_k=r_top_k,
+                )
+            except Exception as exc:
+                logger.error(f"CrossEncoder reranking failed: {exc}")
+                reranked = [
+                    (cand, cand.rrf_score)
+                    for cand in fused_candidates[:r_top_k]
+                ]
 
         # 5. Build EvidenceChunk objects preserving provenance & filtering noise
         evidence_chunks: list[EvidenceChunk] = []
