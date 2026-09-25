@@ -375,6 +375,14 @@ export default function ChatInputBar({ onSendMessage, isLoading = false }: ChatI
   };
 
   const activeLangObj = VOICE_LANGUAGES.find((l) => l.code === selectedLang) || VOICE_LANGUAGES[0];
+  const hasNonEnglishScript = /[\u0900-\u0d7f\u0600-\u06ff]/.test(query);
+  const isEnglishVoiceActive = textLang === 'en' && !hasNonEnglishScript;
+
+  useEffect(() => {
+    if (hasNonEnglishScript && (isRecording || isTranscribing)) {
+      cancelRecording();
+    }
+  }, [query, isRecording, isTranscribing]);
 
   return (
     <div className="w-full relative z-20 my-4 font-sans-body">
@@ -424,7 +432,7 @@ export default function ChatInputBar({ onSendMessage, isLoading = false }: ChatI
           </div>
 
           {/* Voice Input & Cancel Buttons (English text queries only) */}
-          {textLang === 'en' && (
+          {isEnglishVoiceActive && (
             <>
               {/* Cancel Recording Button */}
               {isRecording && (

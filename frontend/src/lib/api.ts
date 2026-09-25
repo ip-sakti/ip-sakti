@@ -170,36 +170,17 @@ export async function processQueryAPI(payload: APIQueryPayload): Promise<APIQuer
 
     return await res.json();
   } catch (err) {
-    console.warn('FastAPI backend request failed, falling back to local synthesis:', err);
+    console.warn('FastAPI backend request failed:', err);
 
     return {
-      query_id: `fallback-${Date.now()}`,
-      answer: `[Grounding Response] Decision-support synthesis for query "${payload.raw_query}":\n\nTraditional Knowledge digital library (TKDL) and Indian Patent Office provisions prohibit patenting of known traditional formulations (Section 3(p) of the Patents Act, 1970).\n\nFor licensing and compliance, Rule 158-B of Drugs & Cosmetics Rules, 1945 applies to Ayurvedic, Siddha, and Unani proprietary formulations.`,
-      is_abstention: false,
-      confidence: 0.88,
-      evidence: [
-        {
-          source_id: 'patent-act-sec3p',
-          doc_id: 'patent-act-sec3p',
-          title: 'Section 3(p) — Inventions Relating to Traditional Knowledge',
-          source_name: 'Indian Patents Act, 1970',
-          authority: 'Indian Patent Office (IPO)',
-          content: 'An invention which in effect, is traditional knowledge or which is an aggregation or duplication of known properties of traditionally known component or components is not patentable.',
-          source_url: 'https://ipindia.gov.in',
-        },
-        {
-          source_id: 'ayush-rule-158b',
-          doc_id: 'ayush-rule-158b',
-          title: 'Rule 158-B — Licensing Requirements for ASU Drugs',
-          source_name: 'Drugs & Cosmetics Rules, 1945',
-          authority: 'Ministry of AYUSH',
-          content: 'Mandatory proof of safety and effectiveness documentation for patent or proprietary Ayurvedic, Siddha, or Unani medicines.',
-          source_url: 'https://ayush.gov.in',
-        },
-      ],
-      citations: ['Patents Act 1970 Sec 3(p)', 'Drugs & Cosmetics Rules 1945 Rule 158-B'],
-      agents_invoked: ['IP Agent', 'AYUSH Agent', 'TK-ABS Agent'],
-      disclaimer: 'This informational response is grounded in authoritative text archives and does not substitute for professional legal advice.',
+      query_id: `error-${Date.now()}`,
+      answer: `Unable to connect to the IP-SAKTI research backend. Please ensure the service is running and try again.`,
+      is_abstention: true,
+      confidence: 0.0,
+      evidence: [],
+      citations: [],
+      agents_invoked: ['System Error'],
+      disclaimer: 'Connection error. Please try again.',
     };
   }
 }

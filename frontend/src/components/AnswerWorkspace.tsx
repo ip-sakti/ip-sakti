@@ -27,9 +27,23 @@ interface AnswerWorkspaceProps {
   onSaveResearch?: () => void;
 }
 
-/**
- * Detect primary language of response text based on Unicode character script.
- */
+const LANG_NAME_MAP: Record<string, string> = {
+  en: 'English',
+  te: 'Telugu',
+  hi: 'Hindi',
+  kn: 'Kannada',
+  ta: 'Tamil',
+  bn: 'Bengali',
+  mr: 'Marathi',
+  ml: 'Malayalam',
+  gu: 'Gujarati',
+  pa: 'Punjabi',
+  or: 'Odia',
+  as: 'Assamese',
+  ur: 'Urdu',
+  sa: 'Sanskrit',
+};
+
 function detectTextLanguage(text: string, defaultLang?: string): string {
   if (!text) return defaultLang || 'en';
   if (/[\u0c00-\u0c7f]/.test(text)) return 'te';
@@ -80,15 +94,15 @@ export default function AnswerWorkspace({
         .slice(0, 3)
     : [];
 
-  const respLang = (response as any).language || detectTextLanguage(response.answer || '', 'en');
+  const queryLang = (response as any).user_language || (response as any).language || detectTextLanguage(query || '', 'en');
+  const isEnglishQuery = queryLang === 'en';
+  const displayLangName = LANG_NAME_MAP[queryLang] || 'English';
+
   const answerId = response.answer ? `${query}_${response.answer.slice(0, 50)}` : '';
 
-  const targetLang = detectTextLanguage(response.answer || '', respLang);
-  const isEnglishAnswer = targetLang === 'en';
-
-  // Automatic Speech Synthesis on NEW Answer (English answers only)
+  // Automatic Speech Synthesis on NEW Answer (English queries only)
   useEffect(() => {
-    if (answerId && lastSpokenIdRef.current !== answerId && isEnglishAnswer) {
+    if (answerId && lastSpokenIdRef.current !== answerId && isEnglishQuery) {
       lastSpokenIdRef.current = answerId;
 
       speakText({
@@ -104,10 +118,10 @@ export default function AnswerWorkspace({
       stopSpeaking();
       setIsSpeakingState(false);
     };
-  }, [answerId, response.answer, isEnglishAnswer, query]);
+  }, [answerId, response.answer, isEnglishQuery, query]);
 
   const toggleSpeech = () => {
-    if (!isEnglishAnswer) return;
+    if (!isEnglishQuery) return;
     if (isSpeakingState) {
       stopSpeaking();
       setIsSpeakingState(false);
@@ -134,7 +148,7 @@ export default function AnswerWorkspace({
           <div className="flex items-center gap-2">
             {/* Detected Language */}
             <span className="bg-[#EEF3E4] text-[#003E29] text-[11px] font-semibold px-2.5 py-0.5 rounded border border-[#C8D7C2]">
-              Language: English / Auto-Detected
+              Language: {displayLangName} / Auto-Detected
             </span>
 
             {/* Invoked Agents / Category */}
@@ -243,7 +257,7 @@ export default function AnswerWorkspace({
           </div>
 
           {/* Accessible Speaker / Stop Control (English responses only) */}
-          {isEnglishAnswer && (
+          {isEnglishQuery && (
             <button
               type="button"
               onClick={toggleSpeech}
