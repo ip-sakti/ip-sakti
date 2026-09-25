@@ -62,6 +62,9 @@ class SupabaseAuthService:
         clean_name = name.strip()
         clean_email = email.strip().lower()
 
+        if clean_email in self._mem_users:
+            return None, "An account with this email already exists."
+
         if not self.is_supabase_enabled:
             # Memory store for unconfigured local mode
             user_id = f"usr-{uuid4()}"
@@ -82,6 +85,11 @@ class SupabaseAuthService:
                 user_metadata={"display_name": clean_name, "name": clean_name},
             )
             user_data = res.get("user") or res
+
+            # Supabase returns empty identities list when user already exists
+            if user_data.get("identities") is not None and len(user_data.get("identities", [])) == 0:
+                return None, "An account with this email already exists."
+
             user_id = user_data.get("id")
 
             if user_id:
@@ -95,12 +103,25 @@ class SupabaseAuthService:
                 except Exception as p_exc:
                     logger.warning(f"Could not auto-create profile in Supabase: {p_exc}")
 
+            access_token = res.get("access_token")
+            refresh_token = res.get("refresh_token")
+
+            # If sign_up succeeded but returned no access_token (email confirmation enabled in GoTrue),
+            # authenticate via password grant to establish the session.
+            if not access_token and user_id:
+                try:
+                    login_res = self.client.sign_in_with_password(clean_email, password)
+                    access_token = login_res.get("access_token")
+                    refresh_token = login_res.get("refresh_token")
+                except Exception:
+                    pass
+
             reg_rec = {
                 "id": user_id,
                 "name": clean_name,
                 "email": clean_email,
-                "access_token": res.get("access_token"),
-                "refresh_token": res.get("refresh_token"),
+                "access_token": access_token,
+                "refresh_token": refresh_token,
             }
             self._mem_users[clean_email] = reg_rec
             return reg_rec, None
@@ -108,7 +129,50 @@ class SupabaseAuthService:
         except (ValueError, Exception) as exc:
             logger.warning(f"Supabase user registration error: {exc}")
             exc_str = str(exc).lower()
-            if "rate limit" in exc_str or "already registered" in exc_str or "429" in exc_str:
+
+            # If signup failed due to confirmation email/SMTP failure or rate limits,
+            # and service_role_key is available, use admin_create_user with confirmed email:
+            if ("confirmation email" in exc_str or "smtp" in exc_str or "rate limit" in exc_str) and self.client.service_role_key:
+                try:
+                    admin_res = self.client.admin_create_user(
+                        email=clean_email,
+                        password=password,
+                        user_metadata={"display_name": clean_name, "name": clean_name},
+                        email_confirm=True,
+                    )
+                    user_id = admin_res.get("id")
+                    if user_id:
+                        try:
+                            self.client.insert(
+                                table="profiles",
+                                data={"id": user_id, "display_name": clean_name, "preferred_language": "en"},
+                                use_service_role=True,
+                            )
+                        except Exception as p_exc:
+                            logger.error(f"Could not create profile: {p_exc}. Rolling back user {user_id}")
+                            self.client.admin_delete_user(user_id)
+                            return None, "Registration failed during profile creation. Please try again."
+
+                        login_res = self.client.sign_in_with_password(clean_email, password)
+                        reg_rec = {
+                            "id": user_id,
+                            "name": clean_name,
+                            "email": clean_email,
+                            "access_token": login_res.get("access_token"),
+                            "refresh_token": login_res.get("refresh_token"),
+                        }
+                        self._mem_users[clean_email] = reg_rec
+                        return reg_rec, None
+                except Exception as admin_exc:
+                    a_str = str(admin_exc).lower()
+                    if "already" in a_str or "email_exists" in a_str or "422" in a_str:
+                        return None, "An account with this email already exists."
+                    return None, f"Registration failed: {admin_exc}"
+
+            if "already registered" in exc_str or "already been registered" in exc_str or "email_exists" in exc_str:
+                return None, "An account with this email already exists."
+
+            if "rate limit" in exc_str or "429" in exc_str:
                 try:
                     res = self.client.sign_in_with_password(clean_email, password)
                     user_obj = res.get("user", {})
@@ -128,6 +192,7 @@ class SupabaseAuthService:
                         "email": clean_email,
                         "created_at": datetime.now(timezone.utc).isoformat(),
                     }, None
+
             return None, str(exc)
 
     def authenticate_user(
@@ -167,9 +232,9 @@ class SupabaseAuthService:
 
         except (ValueError, Exception) as exc:
             logger.error(f"Supabase authentication error for {clean_email}: {exc}")
-            err_msg = str(exc)
-            if "invalid login credentials" in err_msg.lower() or "400" in err_msg:
-                return None, "Invalid login credentials"
+            err_msg = str(exc).lower()
+            if "invalid login credentials" in err_msg or "400" in err_msg or "invalid" in err_msg:
+                return None, "Incorrect email or password."
             return None, f"Authentication failed: {exc}"
 
     def verify_session(self, access_token: str) -> Optional[Dict[str, Any]]:

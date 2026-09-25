@@ -77,6 +77,56 @@ class SupabaseClient:
                 raise ValueError(f"Supabase signup failed ({resp.status_code}): {err_detail}")
             return resp.json()
 
+    def admin_create_user(
+        self,
+        email: str,
+        password: str,
+        user_metadata: Optional[Dict[str, Any]] = None,
+        email_confirm: bool = True,
+    ) -> Dict[str, Any]:
+        """
+        Create a new user directly via the Supabase Admin API with confirmed email.
+        Strictly backend-only operation requiring service_role_key.
+        """
+        if not self.is_configured or not self.service_role_key:
+            raise RuntimeError("Supabase service role key not configured.")
+
+        url = f"{self.url}/auth/v1/admin/users"
+        payload: Dict[str, Any] = {
+            "email": email,
+            "password": password,
+            "email_confirm": email_confirm,
+        }
+        if user_metadata:
+            payload["user_metadata"] = user_metadata
+
+        headers = self._get_headers(use_service_role=True)
+        with httpx.Client(timeout=self.timeout) as client:
+            resp = client.post(url, json=payload, headers=headers)
+            if resp.status_code >= 400:
+                err_detail = resp.json().get("msg") or resp.json().get("error_description") or resp.text
+                raise ValueError(f"Supabase admin user creation failed ({resp.status_code}): {err_detail}")
+            return resp.json()
+
+    def admin_delete_user(self, user_id: str) -> bool:
+        """
+        Delete a user via the Supabase Admin API.
+        Used for rollback in case downstream profile creation fails.
+        """
+        if not self.is_configured or not self.service_role_key:
+            return False
+
+        url = f"{self.url}/auth/v1/admin/users/{user_id}"
+        headers = self._get_headers(use_service_role=True)
+        try:
+            with httpx.Client(timeout=self.timeout) as client:
+                resp = client.delete(url, headers=headers)
+                return resp.status_code in (200, 204)
+        except Exception as exc:
+            logger.warning(f"Error rolling back Supabase user {user_id}: {exc}")
+            return False
+
+
     def sign_in_with_password(self, email: str, password: str) -> Dict[str, Any]:
         """
         Authenticate user with email and password via Supabase Auth.
