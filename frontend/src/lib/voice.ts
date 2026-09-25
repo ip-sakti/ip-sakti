@@ -75,15 +75,16 @@ export function getVoiceForLanguage(langCode: string): SpeechSynthesisVoice | nu
 interface SpeakOptions {
   text: string;
   lang?: string;
+  queryText?: string;
   onStart?: () => void;
   onEnd?: () => void;
   onError?: (err: any) => void;
 }
 
 /**
- * Speak text aloud using browser Web Speech API (English only).
+ * Speak text aloud using browser Web Speech API (English queries only).
  */
-export function speakText({ text, lang = 'en', onStart, onEnd, onError }: SpeakOptions): void {
+export function speakText({ text, lang = 'en', queryText, onStart, onEnd, onError }: SpeakOptions): void {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
     console.warn('SpeechSynthesis API is not supported in this environment.');
     if (onEnd) onEnd();
@@ -91,8 +92,11 @@ export function speakText({ text, lang = 'en', onStart, onEnd, onError }: SpeakO
   }
 
   const normLang = (lang || 'en').toLowerCase().split('-')[0];
-  if (normLang !== 'en') {
-    // English-only policy: Non-English text TTS is disabled
+  const hasNonEnglishScriptInQuery = queryText ? /[\u0900-\u0d7f\u0600-\u06ff]/.test(queryText) : false;
+
+  if (normLang !== 'en' || hasNonEnglishScriptInQuery) {
+    // Hard safety guard: Voice output is allowed ONLY for English queries
+    stopSpeaking();
     if (onEnd) onEnd();
     return;
   }
@@ -135,7 +139,13 @@ export function speakText({ text, lang = 'en', onStart, onEnd, onError }: SpeakO
   };
 
   try {
-    window.speechSynthesis.speak(utterance);
+    // 3. Re-verify English query condition immediately before calling speak
+    if (normLang === 'en' && !hasNonEnglishScriptInQuery) {
+      window.speechSynthesis.speak(utterance);
+    } else {
+      stopSpeaking();
+      if (onEnd) onEnd();
+    }
   } catch (err) {
     console.warn('SpeechSynthesis speak failed:', err);
     if (onEnd) onEnd();

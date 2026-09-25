@@ -94,20 +94,30 @@ export default function AnswerWorkspace({
         .slice(0, 3)
     : [];
 
-  const queryLang = (response as any).user_language || (response as any).language || detectTextLanguage(query || '', 'en');
-  const isEnglishQuery = queryLang === 'en';
+  const hasNonEnglishScriptInQuery = /[\u0900-\u0d7f\u0600-\u06ff]/.test(query || '');
+  const userLang = (response as any).user_language;
+  const queryScriptLang = detectTextLanguage(query || '', 'en');
+  const queryLang = userLang && userLang !== 'en' ? userLang : queryScriptLang;
+  const isEnglishQuery = !hasNonEnglishScriptInQuery && (userLang ? userLang === 'en' : queryScriptLang === 'en');
   const displayLangName = LANG_NAME_MAP[queryLang] || 'English';
 
   const answerId = response.answer ? `${query}_${response.answer.slice(0, 50)}` : '';
 
   // Automatic Speech Synthesis on NEW Answer (English queries only)
   useEffect(() => {
+    if (!isEnglishQuery) {
+      stopSpeaking();
+      setIsSpeakingState(false);
+      return;
+    }
+
     if (answerId && lastSpokenIdRef.current !== answerId && isEnglishQuery) {
       lastSpokenIdRef.current = answerId;
 
       speakText({
         text: response.answer || '',
         lang: 'en',
+        queryText: query,
         onStart: () => setIsSpeakingState(true),
         onEnd: () => setIsSpeakingState(false),
         onError: () => setIsSpeakingState(false),
@@ -121,7 +131,11 @@ export default function AnswerWorkspace({
   }, [answerId, response.answer, isEnglishQuery, query]);
 
   const toggleSpeech = () => {
-    if (!isEnglishQuery) return;
+    if (!isEnglishQuery) {
+      stopSpeaking();
+      setIsSpeakingState(false);
+      return;
+    }
     if (isSpeakingState) {
       stopSpeaking();
       setIsSpeakingState(false);
@@ -129,6 +143,7 @@ export default function AnswerWorkspace({
       speakText({
         text: response.answer || '',
         lang: 'en',
+        queryText: query,
         onStart: () => setIsSpeakingState(true),
         onEnd: () => setIsSpeakingState(false),
         onError: () => setIsSpeakingState(false),
