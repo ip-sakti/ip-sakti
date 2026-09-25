@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect, KeyboardEvent } from 'react';
 import { Search, Send, Loader2, Globe, Mic, Square, AlertCircle, XCircle } from 'lucide-react';
 import { transcribeAudio } from '@/lib/api';
+import { stopSpeaking } from '@/lib/voice';
 
 interface ChatInputBarProps {
   onSendMessage: (query: string, language?: string) => void;
@@ -379,10 +380,11 @@ export default function ChatInputBar({ onSendMessage, isLoading = false }: ChatI
   const isEnglishVoiceActive = textLang === 'en' && !hasNonEnglishScript;
 
   useEffect(() => {
-    if (hasNonEnglishScript && (isRecording || isTranscribing)) {
+    if (hasNonEnglishScript) {
       cancelRecording();
+      stopSpeaking();
     }
-  }, [query, isRecording, isTranscribing]);
+  }, [query, hasNonEnglishScript]);
 
   return (
     <div className="w-full relative z-20 my-4 font-sans-body">
@@ -414,8 +416,9 @@ export default function ChatInputBar({ onSendMessage, isLoading = false }: ChatI
               onChange={(e) => {
                 const newLang = e.target.value;
                 setTextLang(newLang);
-                if (newLang !== 'en' && (isRecording || isTranscribing)) {
+                if (newLang !== 'en') {
                   cancelRecording();
+                  stopSpeaking();
                 }
               }}
               disabled={isLoading || isRecording || isTranscribing}
