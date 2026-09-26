@@ -44,12 +44,35 @@ const LANG_NAME_MAP: Record<string, string> = {
   sa: 'Sanskrit',
 };
 
-function detectTextLanguage(text: string, defaultLang?: string): string {
-  if (!text) return defaultLang || 'en';
-  if (/[\u0c00-\u0c7f]/.test(text)) return 'te';
-  if (/[\u0c80-\u0cff]/.test(text)) return 'kn';
-  if (/[\u0900-\u097f]/.test(text)) return 'hi';
-  return defaultLang || 'en';
+function getOriginalQueryLanguage(queryText: string, explicitUserLang?: string | null): string | null {
+  if (!queryText || !queryText.trim()) return null;
+  const raw = queryText.trim();
+
+  // 1. Script checks for Indic & Non-English Unicode ranges
+  if (/[\u0c00-\u0c7f]/.test(raw)) return 'te';
+  if (/[\u0c80-\u0cff]/.test(raw)) return 'kn';
+  if (/[\u0900-\u097f]/.test(raw)) return 'hi';
+  if (/[\u0b80-\u0bff]/.test(raw)) return 'ta';
+  if (/[\u0980-\u09ff]/.test(raw)) return 'bn';
+  if (/[\u0a80-\u0aff]/.test(raw)) return 'gu';
+  if (/[\u0a00-\u0a7f]/.test(raw)) return 'pa';
+  if (/[\u0b00-\u0b7f]/.test(raw)) return 'or';
+  if (/[\u0d00-\u0d7f]/.test(raw)) return 'ml';
+  if (/[\u0600-\u06ff]/.test(raw)) return 'ur';
+  if (/[\u0900-\u0d7f\u0600-\u06ff]/.test(raw)) return 'non-en';
+
+  // 2. Explicit non-English selection (e.g. Tenglish/Hinglish in Latin script)
+  if (explicitUserLang && explicitUserLang !== 'en') {
+    return explicitUserLang;
+  }
+
+  // 3. Fail-closed ASCII check for English
+  const isAscii = /^[\x00-\x7F]+$/.test(raw);
+  if (!isAscii) {
+    return null;
+  }
+
+  return 'en';
 }
 
 export default function AnswerWorkspace({
@@ -94,12 +117,10 @@ export default function AnswerWorkspace({
         .slice(0, 3)
     : [];
 
-  const hasNonEnglishScriptInQuery = /[\u0900-\u0d7f\u0600-\u06ff]/.test(query || '');
-  const userLang = (response as any).user_language;
-  const queryScriptLang = detectTextLanguage(query || '', 'en');
-  const queryLang = userLang && userLang !== 'en' ? userLang : queryScriptLang;
-  const isEnglishQuery = !hasNonEnglishScriptInQuery && (userLang ? userLang === 'en' : queryScriptLang === 'en');
-  const displayLangName = LANG_NAME_MAP[queryLang] || 'English';
+  const userLangFromResponse = (response as any).user_language || (response as any).detected_language;
+  const queryLang = getOriginalQueryLanguage(query, userLangFromResponse);
+  const isEnglishQuery = queryLang === 'en';
+  const displayLangName = (queryLang && LANG_NAME_MAP[queryLang]) || 'English';
 
   const answerId = response.answer ? `${query}_${response.answer.slice(0, 50)}` : '';
 

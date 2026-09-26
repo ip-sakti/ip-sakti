@@ -91,9 +91,9 @@ class AnswerSynthesisService:
         max_faiss = max(faiss_scores) if faiss_scores else 0.0
         max_bm25 = max(bm25_scores) if bm25_scores else 0.0
 
-        if max_faiss < 0.55 and max_bm25 < 1.5:
+        if max_faiss < 0.58 or (max_faiss < 0.60 and max_bm25 < 1.0):
             logger.warning(
-                "Triggering safe abstention due to weak retrieval grounding (max_faiss < 0.55 & max_bm25 < 1.5)",
+                "Triggering safe abstention due to weak retrieval grounding (max_faiss < 0.58 or (max_faiss < 0.60 & max_bm25 < 1.0))",
                 extra={"query_id": str(context.query_id), "max_faiss": max_faiss, "max_bm25": max_bm25},
             )
             return self.abstention_handler.handle_abstention(
