@@ -83,7 +83,7 @@ export default function AnswerWorkspace({
   const [isSpeakingState, setIsSpeakingState] = useState<boolean>(false);
   const lastSpokenIdRef = useRef<string>('');
 
-  // Safely extract Cosine Similarity score from backend vector retrieval
+  // Extract internal Cosine Similarity score from backend vector retrieval
   let rawCosineSim: number | null = null;
   if (typeof response.cosine_similarity === 'number' && !isNaN(response.cosine_similarity)) {
     rawCosineSim = response.cosine_similarity;
@@ -94,19 +94,32 @@ export default function AnswerWorkspace({
     }
   }
 
-  const hasValidCosineSim = rawCosineSim !== null;
-  const cosineSimVal = hasValidCosineSim ? rawCosineSim!.toFixed(4) : 'N/A';
-
-  // Extract Bayesian Confidence Engine metrics
-  const rawConf = typeof response.confidence_score === 'number'
+  // Extract Confidence metrics & compute combined score if not pre-combined
+  const rawConfScore = typeof response.confidence_score === 'number' && !isNaN(response.confidence_score)
     ? response.confidence_score
-    : (typeof response.confidence === 'number' ? response.confidence : 0);
+    : (typeof response.confidence === 'number' && !isNaN(response.confidence) ? response.confidence : null);
 
-  const confPct = typeof response.confidence_percentage === 'number'
-    ? response.confidence_percentage
-    : Math.round(rawConf * 100);
+  let fusedConf: number;
+  if (rawConfScore !== null && rawCosineSim !== null && !isNaN(rawConfScore) && !isNaN(rawCosineSim)) {
+    const normCos = Math.max(0, Math.min(1, rawCosineSim));
+    const normConf = Math.max(0, Math.min(1, rawConfScore));
+    fusedConf = (0.5 * normCos) + (0.5 * normConf);
+  } else if (rawConfScore !== null && !isNaN(rawConfScore)) {
+    fusedConf = Math.max(0, Math.min(1, rawConfScore));
+  } else if (rawCosineSim !== null && !isNaN(rawCosineSim)) {
+    fusedConf = Math.max(0, Math.min(1, rawCosineSim));
+  } else {
+    fusedConf = 0;
+  }
 
-  const confLevel = response.confidence_level || (confPct >= 90 ? 'HIGH' : confPct >= 70 ? 'MEDIUM' : 'LOW');
+  const confPct = typeof response.confidence_percentage === 'number' && !isNaN(response.confidence_percentage)
+    ? Math.round(response.confidence_percentage)
+    : Math.round(fusedConf * 100);
+
+  // Hard safety guard: guarantee never NaN, undefined, or Infinity
+  const safeConfPct = isNaN(confPct) || !isFinite(confPct) ? 0 : Math.max(0, Math.min(100, confPct));
+
+  const confLevel = response.confidence_level || (safeConfPct >= 90 ? 'HIGH' : safeConfPct >= 70 ? 'MEDIUM' : 'LOW');
   const isAbstained = Boolean(response.is_abstention || response.confidence_should_abstain);
 
   // Extract key findings bullet points from answer if available
@@ -206,20 +219,7 @@ export default function AnswerWorkspace({
               );
             })}
 
-            {/* 1. Cosine Similarity Score (Vector Retrieval Metric) */}
-            {hasValidCosineSim ? (
-              <div className="flex items-center gap-1.5 bg-[#003E29] text-white text-xs font-semibold px-3 py-1 rounded-md shadow-xs" title="FAISS Vector Cosine Similarity Score">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-300" />
-                <span>Cosine Sim: {cosineSimVal}</span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-1.5 bg-gray-100 text-gray-700 text-xs font-medium px-2.5 py-1 rounded-md">
-                <Info className="w-3.5 h-3.5" />
-                <span>Cosine Sim: N/A</span>
-              </div>
-            )}
-
-            {/* 2. Bayesian Confidence Engine Score & Level */}
+            {/* Combined Grounded Confidence Badge (Retrieval Relevance + Bayesian Assessment) */}
             <div
               className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-md shadow-xs border ${
                 isAbstained
@@ -230,10 +230,10 @@ export default function AnswerWorkspace({
                   ? 'bg-blue-100 text-blue-900 border-blue-300'
                   : 'bg-amber-100 text-amber-900 border-amber-300'
               }`}
-              title="Bayesian Confidence Engine: P(Answer is Correct | Evidence)"
+              title="Grounded Confidence: Combined Retrieval Cosine Similarity & Bayesian Confidence Assessment"
             >
               <Sparkles className="w-3.5 h-3.5 text-[#003E29]" />
-              <span>Confidence: {confPct}%</span>
+              <span>Confidence: {safeConfPct}%</span>
               <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.2 bg-white/70 rounded border border-black/10">
                 {isAbstained ? 'ABSTAINED' : confLevel}
               </span>

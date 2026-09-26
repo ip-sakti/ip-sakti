@@ -172,11 +172,6 @@ async def process_query(payload: APIQueryRequest) -> APIQueryResponse:
 
         if final_resp.confidence:
             conf_score = float(final_resp.confidence.score)
-            conf_pct = getattr(final_resp.confidence, "confidence_percentage", round(conf_score * 100.0, 2))
-            if conf_pct is None:
-                conf_pct = round(conf_score * 100.0, 2)
-            conf_lvl = getattr(final_resp.confidence, "confidence_level", "MEDIUM") or "MEDIUM"
-            conf_abstain = getattr(final_resp.confidence, "below_threshold", final_resp.is_abstention)
             conf_signals = getattr(final_resp.confidence, "signals", {}) or {}
 
         # Extract actual vector cosine similarity score from FAISS retrieval evidence
@@ -186,13 +181,38 @@ async def process_query(payload: APIQueryRequest) -> APIQueryResponse:
             if faiss_scores:
                 cosine_sim = float(max(faiss_scores))
 
+        # Deterministic weighted combination: (0.5 * normalized_cosine) + (0.5 * normalized_confidence)
+        if conf_score is not None and cosine_sim is not None:
+            norm_cos = max(0.0, min(1.0, float(cosine_sim)))
+            norm_conf = max(0.0, min(1.0, float(conf_score)))
+            fused_conf = (0.5 * norm_cos) + (0.5 * norm_conf)
+        elif conf_score is not None:
+            fused_conf = max(0.0, min(1.0, float(conf_score)))
+        elif cosine_sim is not None:
+            fused_conf = max(0.0, min(1.0, float(cosine_sim)))
+        else:
+            fused_conf = 0.0
+
+        fused_conf = round(fused_conf, 4)
+        conf_pct = round(fused_conf * 100.0, 2)
+
+        if fused_conf >= 0.90:
+            conf_lvl = "HIGH"
+        elif fused_conf >= 0.70:
+            conf_lvl = "MEDIUM"
+        else:
+            conf_lvl = "LOW"
+
+        if final_resp.confidence:
+            conf_abstain = getattr(final_resp.confidence, "below_threshold", final_resp.is_abstention)
+
         return APIQueryResponse(
             query_id=final_resp.query_id,
             answer=final_resp.answer,
             is_abstention=final_resp.is_abstention,
-            confidence=conf_score,
+            confidence=fused_conf,
             cosine_similarity=cosine_sim,
-            confidence_score=conf_score,
+            confidence_score=fused_conf,
             confidence_percentage=conf_pct,
             confidence_level=conf_lvl,
             confidence_should_abstain=conf_abstain,
