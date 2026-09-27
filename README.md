@@ -418,27 +418,142 @@ Save & Continue Research
 
 # 🏗️ System Architecture
 
-IP-SAKTI Sahayak follows a layered architecture connecting multilingual query processing, orchestration, specialist agents, hybrid retrieval, evidence validation, and safe response generation.
+IP-SAKTI Sahayak follows a layered architecture in which query processing, domain-specific orchestration, specialist agents, retrieval, and evidence safety work together to produce a grounded research response.
 
-<p align="center">
-  <img src="./docs/system-architecture.png" alt="IP-SAKTI Sahayak System Architecture" width="850"/>
-</p>
+```mermaid
+flowchart TD
 
-### Architecture Layers
+    U["User Query"] --> M["Multilingual Processing"]
 
-- **Orchestration Layer** — handles query normalization, intent classification, jurisdiction analysis, formulation classification, rule processing, and agent routing.
-- **Specialist Agents** — includes the IP Agent, Regulatory Agent, and TK/ABS Agent.
-- **Hybrid RAG System** — performs dense FAISS retrieval, sparse BM25 retrieval, RRF fusion, and Cross-Encoder re-ranking.
-- **Evidence & Safety Layer** — handles retrieved evidence, citation validation, confidence assessment, and safe abstention.
-- **Grounded Output** — produces the final evidence-grounded answer when sufficient supporting information is available.
+    subgraph O["ORCHESTRATION LAYER"]
+        M --> Q["Query Normalization"]
 
-> The architecture separates **query understanding, domain routing, retrieval, evidence validation, and response safety** into distinct stages.
+        Q --> I["Intent Classification"]
+        Q --> J["Jurisdiction Analysis"]
+        Q --> F["Formulation Classification"]
 
-# 🚀 Deployment Architecture
+        I --> R["Rule Engine"]
+        J --> R
+        F --> R
 
-The application uses a deployed backend API with Supabase-backed authentication and persistence.
+        R --> AR["Agent Router"]
+    end
 
-- **Backend API:** `https://ip-sakti-jmgy.onrender.com`
-- **Health Check:** [https://ip-sakti-jmgy.onrender.com/health](https://ip-sakti-jmgy.onrender.com/health)
+    subgraph A["SPECIALIST AGENTS"]
+        AR --> IP["IP Agent"]
+        AR --> RA["Regulatory Agent"]
+        AR --> TK["TK / ABS Agent"]
+    end
 
-The health endpoint can be used to verify that the deployed backend service is running.
+    subgraph H["HYBRID RAG SYSTEM"]
+        IP --> D["Dense Retrieval<br/>FAISS"]
+        IP --> S["Sparse Retrieval<br/>BM25"]
+
+        RA --> D
+        RA --> S
+
+        TK --> D
+        TK --> S
+
+        D --> RRF["RRF Fusion"]
+        S --> RRF
+
+        RRF --> CE["Cross-Encoder<br/>Reranking"]
+    end
+
+    subgraph E["EVIDENCE & SAFETY LAYER"]
+        CE --> RE["Retrieved Evidence"]
+        RE --> CV["Citation Validation"]
+        CV --> CA["Confidence Assessment"]
+
+        CA -->|Insufficient Evidence| AB["Safe Abstention"]
+    end
+
+    CA --> GA["Grounded Answer"]
+
+    classDef input fill:#eef4ff,stroke:#4f8cff,color:#222
+    classDef orchestration fill:#f1e8ff,stroke:#9b59ff,color:#222
+    classDef agent fill:#e9fff5,stroke:#22b573,color:#222
+    classDef rag fill:#fff5e8,stroke:#ff7a00,color:#222
+    classDef safety fill:#fff0f5,stroke:#ff3d8d,color:#222
+    classDef output fill:#e9fff5,stroke:#20a89a,color:#222
+
+    class U,M input
+    class Q,I,J,F,R,AR orchestration
+    class IP,RA,TK agent
+    class D,S,RRF,CE rag
+    class RE,CV,CA,AB safety
+    class GA output
+```
+
+## 🔹 Architecture Layers
+
+### 1. Multilingual Input Layer
+
+The system begins with the user's research question and multilingual processing.
+
+### 2. Orchestration Layer
+
+The orchestration layer prepares the query for research by determining:
+
+- **Query Normalization**
+- **Intent Classification**
+- **Jurisdiction Analysis**
+- **Formulation Classification**
+- **Rule Engine Processing**
+- **Agent Routing**
+
+This layer determines how the research request should be handled before it reaches the specialist agents.
+
+### 3. Specialist Agent Layer
+
+The **Agent Router** directs the research request to the relevant specialist domain:
+
+- **IP Agent**
+- **Regulatory Agent**
+- **TK / ABS Agent**
+
+This provides domain-specific handling of different research requirements.
+
+### 4. Hybrid RAG Layer
+
+The specialist agents connect to the hybrid retrieval system consisting of:
+
+- **Dense Retrieval — FAISS**
+- **Sparse Retrieval — BM25**
+- **RRF Fusion**
+- **Cross-Encoder Re-ranking**
+
+The retrieval layer produces the evidence that is passed to the downstream safety and validation stages.
+
+### 5. Evidence & Safety Layer
+
+The retrieved evidence passes through:
+
+```text
+Retrieved Evidence
+       ↓
+Citation Validation
+       ↓
+Confidence Assessment
+       ↓
+   ┌───┴────┐
+   ↓        ↓
+Answer   Abstention
+```
+
+This layer provides the final evidence and safety checks before a response is returned.
+
+### 6. Final Output
+
+When sufficient evidence is available, the system produces a:
+
+> **Grounded Answer**
+
+When the available evidence is insufficient, the system can follow the **Safe Abstention** path rather than presenting an unsupported response.
+
+### 🔗 Architectural Principle
+
+The architecture separates **query understanding, domain routing, retrieval, evidence validation, and response safety** into distinct layers.
+
+This allows IP-SAKTI Sahayak to function as a structured research system rather than a simple direct question-to-LLM pipeline.
