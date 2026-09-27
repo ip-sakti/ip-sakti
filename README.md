@@ -39,7 +39,15 @@
 - [Key Features](#-key-features)
 - [How the System Works](#-how-the-system-works)
 - [System Architecture](#-system-architecture)
+- [Project Statistics](#-project-statistics)
+- [Technology Stack](#-technology-stack)
+- [Repository Structure](#-repository-structure)
 - [Deployment Architecture](#-deployment-architecture)
+- [Budget & Cost Strategy](#-budget--cost-strategy)
+- [Future Upgrades](#-future-upgrades)
+- [Getting Started](#-getting-started)
+- [Team](#-team)
+- [License](#-license)
 
 ---
 
@@ -557,3 +565,667 @@ When the available evidence is insufficient, the system can follow the **Safe Ab
 The architecture separates **query understanding, domain routing, retrieval, evidence validation, and response safety** into distinct layers.
 
 This allows IP-SAKTI Sahayak to function as a structured research system rather than a simple direct question-to-LLM pipeline.
+
+
+# 📊 Project Statistics
+
+The following statistics are based on project-level implementation and verification results.
+
+| Metric | Result |
+|---|---:|
+| **SIH Problem Statement** | `SIH26045` |
+| **Supported Text Languages** | 13 |
+| **Supported Voice Languages** | 4 |
+| **RAG Benchmark Queries** | 20 |
+| **Average Query Latency** | 5.98 seconds |
+| **Deterministic Test Runs** | 5 consecutive runs |
+| **Deterministic Output Consistency** | 100% |
+| **Authentication** | Supabase Auth |
+| **Research Persistence** | Supabase PostgreSQL |
+| **Retrieval Strategy** | FAISS + BM25 + Live Web |
+| **Retrieval Fusion** | RRF |
+| **Evidence Re-ranking** | Cross-Encoder |
+| **Domain Agents** | 3 |
+| **Confidence Method** | Naive Bayesian approach |
+
+### 🧪 Verification Highlights
+
+#### RAG Performance
+
+A benchmark consisting of **20 research queries** was used to evaluate the research pipeline.
+
+**Average observed latency: 5.98 seconds per query.**
+
+#### Determinism
+
+The same sample query was executed **five consecutive times** during verification.
+
+The outputs were identical across all five runs:
+
+**100% output consistency**
+
+#### Authentication & Persistence
+
+The platform uses:
+
+- Supabase Authentication
+- User-specific session handling
+- Supabase PostgreSQL persistence
+- Backend user isolation
+- Persistent Research History
+
+> **These statistics represent implementation and verification results for the current project version and may change as the platform is further optimized.**
+
+
+# 🛠️ Technology Stack
+
+| Layer | Technologies |
+|---|---|
+| **Frontend** | Next.js 16, React, TypeScript |
+| **Backend** | FastAPI, Python |
+| **Authentication** | Supabase Auth |
+| **Database** | Supabase PostgreSQL |
+| **Vector Retrieval** | FAISS |
+| **Keyword Retrieval** | BM25 |
+| **Retrieval Fusion** | Reciprocal Rank Fusion (RRF) |
+| **Re-ranking** | Cross-Encoder |
+| **LLM** | Gemini |
+| **Web Research** | SerpAPI, Tavily, DuckDuckGo fallback |
+| **AI / RAG** | Retrieval-Augmented Generation, Multi-Agent Architecture |
+| **Voice** | Whisper-based Speech-to-Text, Web Speech / Speech Synthesis |
+| **Frontend Deployment** | Vercel |
+| **Backend Deployment** | Render |
+| **Version Control** | Git, GitHub |
+
+# 📁 Repository Structure
+
+The repository is organized into separate modules for **configuration, data, frontend, backend services, retrieval, orchestration, testing, deployment, and documentation**.
+
+```text
+IP-SAKTI/
+│
+├── config/
+│   ├── prompts/
+│   ├── rules/
+│   ├── confidence.yaml
+│   ├── languages.yaml
+│   ├── settings.yaml
+│   └── sources.json
+│
+├── data/
+│   ├── documents/
+│   ├── evaluation/
+│   └── knowledge/
+│
+├── db/
+│   └── supabase_schema.sql
+│
+├── docker/
+│
+├── docs/
+│   └── system-architecture.png
+│
+├── frontend/
+│   ├── public/
+│   │
+│   ├── src/
+│   │   ├── app/
+│   │   ├── components/
+│   │   ├── context/
+│   │   ├── lib/
+│   │   │   ├── api.ts
+│   │   │   └── voice.ts
+│   │   └── proxy.ts
+│   │
+│   ├── .gitignore
+│   ├── AGENTS.md
+│   ├── CLAUDE.md
+│   ├── next-env.d.ts
+│   ├── next.config.ts
+│   ├── package.json
+│   ├── package-lock.json
+│   ├── postcss.config.mjs
+│   └── README.md
+│
+├── indexes/
+│
+├── ip_sakti/
+│   ├── agents/
+│   │
+│   ├── api/
+│   │   ├── __init__.py
+│   │   ├── main.py
+│   │   └── schemas.py
+│   │
+│   ├── confidence/
+│   │   ├── __init__.py
+│   │   └── bayesian_confidence.py
+│   │
+│   ├── llm/
+│   ├── models/
+│   ├── multilingual/
+│   ├── orchestrator/
+│   ├── retrieval/
+│   ├── rule_engine/
+│   ├── services/
+│   ├── ui/
+│   ├── utils/
+│   │
+│   ├── __init__.py
+│   ├── knowledge_loader.py
+│   ├── pipeline.py
+│   └── service.py
+│
+├── scratch/
+│   ├── audit_env_gemini.py
+│   ├── audit_sources.py
+│   ├── benchmark_scores.py
+│   ├── check_api_response.py
+│   ├── check_archive_api.py
+│   ├── check_html_buttons.py
+│   ├── check_kb_urls.py
+│   ├── check_streamlit_proc.py
+│   ├── check_urls.py
+│   ├── debug_query_flow.py
+│   ├── debug_supabase_flow.py
+│   ├── test_whisper_telugu_prompt.py
+│   ├── trace_manu_query.py
+│   ├── verify_db_urls.py
+│   └── verify_integration.py
+│
+├── scripts/
+│   ├── ingest_kb.py
+│   └── test_queries_trace.py
+│
+├── tests/
+│
+├── .env.example
+├── .gitignore
+├── AGENTS.md
+├── docker-compose.yml
+├── Dockerfile
+├── LICENSE
+├── pytest.ini
+├── README.md
+├── requirements.txt
+├── test_abstention.py
+├── test_e2e.py
+├── test_hindi.py
+├── test_rag_queries.py
+└── test_real_kb.py
+```
+
+## 📂 Directory Overview
+
+| Directory | Purpose |
+|---|---|
+| `config/` | Central configuration for prompts, rules, confidence, languages, application settings and source definitions |
+| `data/` | Documents, evaluation resources and knowledge-base data |
+| `db/` | Database schema definitions, including the Supabase schema |
+| `docker/` | Container and deployment-related resources |
+| `docs/` | Project documentation and architecture diagrams |
+| `frontend/` | Next.js / React / TypeScript frontend application |
+| `indexes/` | Retrieval index artifacts used by the research system |
+| `ip_sakti/` | Core Python backend and AI research system |
+| `ip_sakti/agents/` | Specialist agent implementations |
+| `ip_sakti/api/` | FastAPI endpoints and API schemas |
+| `ip_sakti/confidence/` | Bayesian confidence assessment |
+| `ip_sakti/llm/` | LLM integration layer |
+| `ip_sakti/models/` | Application and AI model components |
+| `ip_sakti/multilingual/` | Multilingual processing |
+| `ip_sakti/orchestrator/` | Query orchestration and agent coordination |
+| `ip_sakti/retrieval/` | Retrieval and RAG components |
+| `ip_sakti/rule_engine/` | Rule-based query and workflow processing |
+| `ip_sakti/services/` | Supporting backend services |
+| `ip_sakti/utils/` | Shared backend utilities |
+| `scratch/` | Development audits, debugging and verification utilities |
+| `scripts/` | Knowledge ingestion and research/testing scripts |
+| `tests/` | Automated project tests |
+
+## 🔑 Core Entry Points
+
+| File | Role |
+|---|---|
+| `ip_sakti/api/main.py` | FastAPI backend entry point |
+| `ip_sakti/pipeline.py` | Core research pipeline |
+| `ip_sakti/service.py` | Main backend service layer |
+| `ip_sakti/knowledge_loader.py` | Knowledge loading |
+| `ip_sakti/confidence/bayesian_confidence.py` | Bayesian confidence calculation |
+| `frontend/src/lib/api.ts` | Frontend ↔ backend API communication |
+| `frontend/src/lib/voice.ts` | Frontend voice functionality |
+| `db/supabase_schema.sql` | Supabase database schema |
+| `scripts/ingest_kb.py` | Knowledge-base ingestion |
+| `Dockerfile` | Backend container definition |
+| `docker-compose.yml` | Container orchestration configuration |
+| `requirements.txt` | Python dependencies |
+| `frontend/package.json` | Frontend dependencies and scripts |
+
+> **Note:** Generated and environment-specific directories such as `.venv/`, `.next/`, `node_modules/`, `__pycache__/`, `.pytest_cache/`, local environment files, and runtime database artifacts are intentionally omitted from this structure.
+
+
+# ☁️ Deployment Architecture
+
+IP-SAKTI Sahayak separates the frontend and backend deployment environments while maintaining Supabase as the authentication and persistent data layer.
+
+```text
+                         USER
+                           │
+                           ▼
+                ┌───────────────────┐
+                │      Vercel       │
+                │     Frontend      │
+                │     Next.js       │
+                └─────────┬─────────┘
+                          │
+                          │ HTTPS
+                          ▼
+                ┌───────────────────┐
+                │      Render       │
+                │   FastAPI Backend │
+                └─────────┬─────────┘
+                          │
+             ┌────────────┼────────────┐
+             │            │            │
+             ▼            ▼            ▼
+        ┌─────────┐  ┌─────────┐  ┌─────────────┐
+        │Supabase │  │ Gemini  │  │ Web Research│
+        │Auth + DB│  │   LLM   │  │   Sources   │
+        └─────────┘  └─────────┘  └─────────────┘
+```
+
+### Frontend
+
+The Next.js frontend is deployed through **Vercel**.
+
+It provides:
+
+- User authentication interface
+- Research workspace
+- Research history
+- Source evidence display
+- Confidence display
+- Settings and support
+
+### Backend
+
+The FastAPI backend is deployed through **Render**.
+
+**Production Backend:**
+
+`https://ip-sakti-jmgy.onrender.com`
+
+**Health Check:**
+
+`https://ip-sakti-jmgy.onrender.com/health`
+
+The health endpoint provides a basic availability check for the deployed backend.
+
+### Supabase
+
+Supabase provides the persistent application infrastructure for:
+
+- Authentication
+- PostgreSQL database
+- User-specific research data
+- Persistent research history
+
+### External AI & Research Services
+
+The backend integrates with external services required for AI reasoning and live research.
+
+```text
+Vercel
+  │
+  ▼
+Next.js Frontend
+  │
+  ▼
+Render
+  │
+  ├── Supabase Auth
+  ├── Supabase PostgreSQL
+  ├── Gemini
+  └── Live Web Research
+```
+
+> **Deployment principle:** The frontend, backend, authentication, database, AI services, and external research services are separated into dedicated layers, allowing each component to be managed independently.
+
+
+# 💰 Budget & Cost Strategy
+
+IP-SAKTI Sahayak is designed around a **cost-conscious cloud architecture**, using managed services where they provide the most value while keeping the core application components lightweight.
+
+### Cost Components
+
+| Component | Service / Approach | Indicative Cost (USD/month) | Indicative Cost (INR/month) |
+|---|---|---:|---:|
+| **Frontend Hosting** | Vercel Pro | ~$20 | ~₹1,920 |
+| **Backend Hosting** | Render | ~$7 | ~₹670 |
+| **Authentication + Database** | Supabase Pro | ~$25 | ~₹2,400 |
+| **LLM** | Gemini API | ~$5–$20* | ~₹480–₹1,920* |
+| **Live Research** | Search APIs / fallback providers | ~$0–$20* | ~₹0–₹1,920* |
+| **Vector Retrieval** | FAISS | $0 | ₹0 |
+| **Keyword Retrieval** | BM25 | $0 | ₹0 |
+| **RAG Pipeline** | Python-based implementation | $0 | ₹0 |
+| **Source Code** | GitHub Free | $0 | ₹0 |
+
+### 💵 Indicative Average Cost
+
+For a **small production deployment** with moderate research usage:
+
+**≈ $57–$92 / month**
+
+**≈ ₹5,500–₹8,800 / month**
+
+```text
+Small Production Deployment
+
+Infrastructure
+      │
+      ├── Vercel       ≈ ₹1,920
+      ├── Render       ≈ ₹670
+      ├── Supabase     ≈ ₹2,400
+      │
+      └── AI + Search  ≈ ₹480–₹3,840
+                         ─────────────
+                         ≈ ₹5,500–₹8,800 / month
+```
+
+### 🆓 Development / Hackathon Mode
+
+During development and demonstrations, free tiers and open-source components can significantly reduce the cost.
+
+**Indicative development cost:**
+
+**≈ $0–$20 / month**
+
+**≈ ₹0–₹1,920 / month**
+
+### 📈 Scaling
+
+As usage increases, costs will primarily depend on:
+
+- Number of research queries
+- LLM token consumption
+- Live web-search requests
+- Database storage
+- Bandwidth
+- Document processing volume
+- Number of concurrent users
+
+The architecture allows individual components to be scaled independently rather than requiring the entire platform to move to a higher-cost infrastructure tier.
+
+### Cost Optimization Strategy
+
+- Use **FAISS and BM25** as open-source retrieval components.
+- Keep retrieval and ranking workloads on the backend.
+- Use managed authentication and database infrastructure.
+- Use AI and search APIs according to actual demand.
+- Keep secrets in environment variables.
+- Separate frontend and backend deployment.
+- Scale infrastructure progressively with user demand.
+
+> **Note:** These are indicative estimates for budgeting purposes, not fixed quotations. Actual costs vary by provider plan, usage, taxes, exchange rates, AI-token consumption, storage, bandwidth, and search volume. 
+
+# 🚀 Future Upgrades
+
+Future development will extend IP-SAKTI Sahayak toward a **multilingual, knowledge-centric and government-ready research infrastructure**.
+
+### 🇮🇳 1. Sarvam AI & Indic Intelligence
+
+Integration with **Sarvam AI** can strengthen India's regional-language interaction through:
+
+- Indic Speech-to-Text and Text-to-Speech
+- Translation and transliteration
+- Code-mixed language understanding
+- Indian-language document intelligence
+- Voice-based government research assistance
+
+### 🧠 2. Knowledge Graph
+
+A domain-specific **Knowledge Graph** can connect:
+
+```text
+Traditional Knowledge
+        ↓
+Plants / Formulations / Entities
+        ↓
+IP / Patents / Regulations
+        ↓
+Jurisdiction
+        ↓
+Authoritative Sources
+```
+
+This can enable **multi-hop research, relationship-aware retrieval, contradiction detection and explainable knowledge connections**.
+
+### 🔗 3. Blockchain-Based Provenance
+
+A permissioned blockchain or tamper-evident ledger can strengthen:
+
+- Knowledge provenance
+- Evidence integrity
+- Document version tracking
+- Research audit trails
+- Traditional Knowledge and ABS records
+- Timestamped source verification
+
+Sensitive documents should remain off-chain, with only required hashes and provenance metadata recorded on-chain.
+
+### 🏛️ 4. Government API Interoperability
+
+Future integration with government API ecosystems such as **API Setu** can enable:
+
+- Government data interoperability
+- Regulatory information exchange
+- Machine-readable datasets
+- Authorized e-governance integrations
+- Secure API-based services
+
+### 📚 5. Advanced Knowledge Intelligence
+
+Future versions can introduce:
+
+- Regulatory change detection
+- Knowledge-base versioning
+- Temporal validity checking
+- Jurisdiction-aware reasoning
+- Source authority analysis
+- Contradiction detection
+- Claim-to-source mapping
+
+### 🔐 6. Government-Grade Identity & Security
+
+For institutional deployment:
+
+- Role-Based Access Control (RBAC)
+- Department and organization workspaces
+- Researcher / Reviewer / Administrator roles
+- Single Sign-On (SSO)
+- Fine-grained permissions
+- Centralized audit logging
+- Key rotation and secrets management
+- Security monitoring and compliance controls
+
+### 🇮🇳 7. IndiaAI Ecosystem
+
+Future development can explore the **IndiaAI ecosystem** for:
+
+- Indian-language AI models
+- Government datasets
+- AI compute resources
+- Document intelligence
+- Model evaluation
+- Responsible AI capabilities
+
+### 🗃️ 8. Digital Knowledge Registry
+
+A future **Digital Knowledge Registry** can provide structured records for:
+
+- Traditional Knowledge
+- Medicinal plants
+- Formulations
+- IP records
+- Regulatory documents
+- Source provenance
+- Jurisdiction and applicability
+
+This can create a structured knowledge layer above the existing research system.
+
+### 🎯 Long-Term Vision
+
+```text
+                  IP-SAKTI Sahayak
+                         │
+       ┌─────────────────┼─────────────────┐
+       ▼                 ▼                 ▼
+  Knowledge Graph   Government APIs    Indic AI
+       │                 │                 │
+       └─────────────────┼─────────────────┘
+                         ▼
+                Trusted Knowledge Layer
+                         │
+          ┌──────────────┼──────────────┐
+          ▼              ▼              ▼
+      Provenance      Security       Auditability
+          │              │              │
+          └──────────────┼──────────────┘
+                         ▼
+              Government-Ready Platform
+```
+
+> **Vision:** Evolve IP-SAKTI Sahayak into an India-first, multilingual and auditable knowledge infrastructure connecting **Intellectual Property, Ayurveda, Traditional Knowledge, ABS and regulatory intelligence**.
+
+# 🛠️ Getting Started
+
+## Prerequisites
+
+Make sure the following are installed:
+
+- **Python**
+- **Node.js**
+- **npm**
+- **Git**
+
+You will also need the required credentials and configuration values for the services used by the application.
+
+---
+
+## 1. Clone the Repository
+
+```bash
+git clone <YOUR-GITHUB-REPOSITORY-URL>
+cd IP-SAKTI
+```
+
+---
+
+## 2. Configure Environment Variables
+
+Create the required environment files using the provided examples.
+
+```bash
+cp .env.example .env
+```
+
+For the frontend, configure the required environment variables according to:
+
+```text
+frontend/.env.example
+```
+
+> Never commit API keys, passwords, tokens, or other secrets to Git.
+
+---
+
+## 3. Backend Setup
+
+Create and activate a Python virtual environment.
+
+### Windows
+
+```powershell
+python -m venv .venv
+.venv\Scripts\activate
+```
+
+Install the backend dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+Start the FastAPI backend according to the project's configured entry point.
+
+---
+
+## 4. Frontend Setup
+
+Open a new terminal:
+
+```bash
+cd frontend
+npm install
+```
+
+Start the development server:
+
+```bash
+npm run dev
+```
+
+The frontend development server will be available at the local address displayed by Next.js.
+
+---
+
+## 5. Verify the Backend
+
+The deployed backend provides a health endpoint:
+
+**Production Health Check:**
+
+https://ip-sakti-jmgy.onrender.com/health
+
+A successful response confirms that the deployed API is reachable.
+
+---
+
+## 6. Production Deployment
+
+### 🌐 Live Application
+
+https://ip-sepia-seven.vercel.app
+
+### ⚙️ Backend API
+
+https://ip-sakti-jmgy.onrender.com
+
+### ❤️ Backend Health Check
+
+https://ip-sakti-jmgy.onrender.com/health
+
+---
+
+## 7. Run Tests
+
+From the repository root:
+
+```bash
+pytest
+```
+
+Build the frontend:
+
+```bash
+cd frontend
+npm run build
+```
+
+> Development and production configuration may require additional environment-specific values depending on the services being used.
+
+
+# 📄 License
+
+This project is distributed under the license specified in the repository's [`LICENSE`](./LICENSE) file.
+
+Please refer to the `LICENSE` file for the complete terms and conditions governing the use, modification, and distribution of this project.
