@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-
 # 🇮🇳 IP-SAKTI Sahayak
 
 ### Multilingual, Source-Cited AI Assistant for Intellectual Property & Regulatory Guidance in Ayurveda
@@ -10,18 +8,8 @@
 [![Architecture](https://img.shields.io/badge/Architecture-Hybrid%20RAG-purple)]()
 [![Authentication](https://img.shields.io/badge/Auth-Supabase-green)]()
 
-=======
-# 🇮🇳 IP-SAKTI Sahayak
+---
 
-### Multilingual, Source-Cited AI Assistant for Intellectual Property & Regulatory Guidance in Ayurveda
-
-[![Smart India Hackathon](https://img.shields.io/badge/Smart%20India%20Hackathon-2026-orange)]()
-[![Problem Statement](https://img.shields.io/badge/SIH-SIH26045-blue)]()
-[![Domain](https://img.shields.io/badge/Domain-AI%20%7C%20RAG%20%7C%20IP%20%7C%20AYUSH-green)]()
-[![Architecture](https://img.shields.io/badge/Architecture-Hybrid%20RAG-purple)]()
-[![Authentication](https://img.shields.io/badge/Auth-Supabase-green)]()
-
->>>>>>> dd3415f (readme.md updated)
 > **IP-SAKTI Sahayak** is a multilingual, source-cited AI research assistant designed to provide grounded guidance on Intellectual Property, Ayurveda, Traditional Knowledge, Access & Benefit Sharing (ABS), and regulatory frameworks across Indian and international regimes.
 
 ---
@@ -51,25 +39,7 @@
 - [Key Features](#-key-features)
 - [How the System Works](#-how-the-system-works)
 - [System Architecture](#-system-architecture)
-- [RAG Pipeline](#-rag-pipeline)
-<<<<<<< HEAD
-=======
-- [Confidence Score](#-confidence-score)
-- [Multilingual & Voice Architecture](#-multilingual--voice-architecture)
-- [Authentication & Security](#-authentication--security)
->>>>>>> dd3415f (readme.md updated)
-- [Research History](#-research-history)
-- [Source & Citation System](#-source--citation-system)
-- [Project Statistics](#-project-statistics)
-- [Technology Stack](#-technology-stack)
-- [Repository Structure](#-repository-structure)
 - [Deployment Architecture](#-deployment-architecture)
-- [Budget & Cost Strategy](#-budget--cost-strategy)
-- [Future Upgrades](#-future-upgrades)
-- [Limitations](#-limitations)
-- [Getting Started](#-getting-started)
-- [Team](#-team)
-- [License](#-license)
 
 ---
 
@@ -108,7 +78,6 @@ IP-SAKTI Sahayak therefore treats every research query as a retrieval, reasoning
 ## IP-SAKTI Sahayak
 
 IP-SAKTI Sahayak combines:
-<<<<<<< HEAD
 
 **Hybrid Retrieval + Multi-Agent Reasoning + Live Research + Citation Validation + Confidence Assessment + Abstention**
 
@@ -162,12 +131,7 @@ Query Processing
         ▼
   Cited Research Response
 ```
-=======
->>>>>>> dd3415f (readme.md updated)
 
-**Hybrid Retrieval + Multi-Agent Reasoning + Live Research + Citation Validation + Confidence Assessment + Abstention**
-
-<<<<<<< HEAD
 ## 🚀 Why IP-SAKTI Sahayak Is Different
 
 A generic AI chatbot is primarily designed for conversation.
@@ -450,195 +414,31 @@ Save & Continue Research
 
 > **The result is a research workspace where users can not only receive an answer, but also inspect its supporting evidence, understand the confidence associated with it, and continue their research over time.**
 
+---
+
 # 🏗️ System Architecture
 
-IP-SAKTI Sahayak follows a layered architecture in which query processing, domain-specific orchestration, specialist agents, retrieval, and evidence safety work together to produce a grounded research response.
+IP-SAKTI Sahayak follows a layered architecture connecting multilingual query processing, orchestration, specialist agents, hybrid retrieval, evidence validation, and safe response generation.
 
-```mermaid
-flowchart TD
+<p align="center">
+  <img src="./docs/system-architecture.png" alt="IP-SAKTI Sahayak System Architecture" width="850"/>
+</p>
 
-    U["User Query"] --> M["Multilingual Processing"]
+### Architecture Layers
 
-    subgraph O["ORCHESTRATION LAYER"]
-        M --> Q["Query Normalization"]
+- **Orchestration Layer** — handles query normalization, intent classification, jurisdiction analysis, formulation classification, rule processing, and agent routing.
+- **Specialist Agents** — includes the IP Agent, Regulatory Agent, and TK/ABS Agent.
+- **Hybrid RAG System** — performs dense FAISS retrieval, sparse BM25 retrieval, RRF fusion, and Cross-Encoder re-ranking.
+- **Evidence & Safety Layer** — handles retrieved evidence, citation validation, confidence assessment, and safe abstention.
+- **Grounded Output** — produces the final evidence-grounded answer when sufficient supporting information is available.
 
-        Q --> I["Intent Classification"]
-        Q --> J["Jurisdiction Analysis"]
-        Q --> F["Formulation Classification"]
+> The architecture separates **query understanding, domain routing, retrieval, evidence validation, and response safety** into distinct stages.
 
-        I --> R["Rule Engine"]
-        J --> R
-        F --> R
+# 🚀 Deployment Architecture
 
-        R --> AR["Agent Router"]
-    end
+The application uses a deployed backend API with Supabase-backed authentication and persistence.
 
-    subgraph A["SPECIALIST AGENTS"]
-        AR --> IP["IP Agent"]
-        AR --> RA["Regulatory Agent"]
-        AR --> TK["TK / ABS Agent"]
-    end
+- **Backend API:** `https://ip-sakti-jmgy.onrender.com`
+- **Health Check:** [https://ip-sakti-jmgy.onrender.com/health](https://ip-sakti-jmgy.onrender.com/health)
 
-    subgraph H["HYBRID RAG SYSTEM"]
-        IP --> D["Dense Retrieval<br/>FAISS"]
-        IP --> S["Sparse Retrieval<br/>BM25"]
-
-        RA --> D
-        RA --> S
-
-        TK --> D
-        TK --> S
-
-        D --> RRF["RRF Fusion"]
-        S --> RRF
-
-        RRF --> CE["Cross-Encoder<br/>Reranking"]
-    end
-
-    subgraph E["EVIDENCE & SAFETY LAYER"]
-        CE --> RE["Retrieved Evidence"]
-        RE --> CV["Citation Validation"]
-        CV --> CA["Confidence Assessment"]
-
-        CA -->|Insufficient Evidence| AB["Safe Abstention"]
-    end
-
-    CA --> GA["Grounded Answer"]
-
-    classDef input fill:#eef4ff,stroke:#4f8cff,color:#222
-    classDef orchestration fill:#f1e8ff,stroke:#9b59ff,color:#222
-    classDef agent fill:#e9fff5,stroke:#22b573,color:#222
-    classDef rag fill:#fff5e8,stroke:#ff7a00,color:#222
-    classDef safety fill:#fff0f5,stroke:#ff3d8d,color:#222
-    classDef output fill:#e9fff5,stroke:#20a89a,color:#222
-
-    class U,M input
-    class Q,I,J,F,R,AR orchestration
-    class IP,RA,TK agent
-    class D,S,RRF,CE rag
-    class RE,CV,CA,AB safety
-    class GA output
-```
-
-## 🔹 Architecture Layers
-
-### 1. Multilingual Input Layer
-
-The system begins with the user's research question and multilingual processing.
-
-### 2. Orchestration Layer
-
-The orchestration layer prepares the query for research by determining:
-
-- **Query Normalization**
-- **Intent Classification**
-- **Jurisdiction Analysis**
-- **Formulation Classification**
-- **Rule Engine Processing**
-- **Agent Routing**
-
-This layer determines how the research request should be handled before it reaches the specialist agents.
-
-### 3. Specialist Agent Layer
-
-The **Agent Router** directs the research request to the relevant specialist domain:
-
-- **IP Agent**
-- **Regulatory Agent**
-- **TK / ABS Agent**
-
-This provides domain-specific handling of different research requirements.
-
-### 4. Hybrid RAG Layer
-
-The specialist agents connect to the hybrid retrieval system consisting of:
-
-- **Dense Retrieval — FAISS**
-- **Sparse Retrieval — BM25**
-- **RRF Fusion**
-- **Cross-Encoder Re-ranking**
-
-The retrieval layer produces the evidence that is passed to the downstream safety and validation stages.
-
-### 5. Evidence & Safety Layer
-
-The retrieved evidence passes through:
-
-```text
-Retrieved Evidence
-       ↓
-Citation Validation
-       ↓
-Confidence Assessment
-       ↓
-   ┌───┴────┐
-   ↓        ↓
-Answer   Abstention
-```
-
-This layer provides the final evidence and safety checks before a response is returned.
-
-### 6. Final Output
-
-When sufficient evidence is available, the system produces a:
-
-> **Grounded Answer**
-
-When the available evidence is insufficient, the system can follow the **Safe Abstention** path rather than presenting an unsupported response.
-
-### 🔗 Architectural Principle
-
-The architecture separates **query understanding, domain routing, retrieval, evidence validation, and response safety** into distinct layers.
-
-This allows IP-SAKTI Sahayak to function as a structured research system rather than a simple direct question-to-LLM pipeline.
-=======
-into one research workflow.
-
-```text
-User Question
-      │
-      ▼
-Language Detection
-      │
-      ▼
-Query Processing
-      │
-      ▼
-┌─────────────────────────────┐
-│      HYBRID RETRIEVAL       │
-│                             │
-│  FAISS      BM25      WEB   │
-│    │          │        │    │
-└────┼──────────┼────────┼────┘
-     │          │        │
-     └──────────┼────────┘
-                ▼
-        RRF Fusion
-                │
-                ▼
-        Cross-Encoder
-         Re-ranking
-                │
-                ▼
-       Multi-Agent Layer
-    ┌───────────┼───────────┐
-    ▼           ▼           ▼
- IP Agent   AYUSH Agent   TK/ABS Agent
-    │           │           │
-    └───────────┼───────────┘
-                ▼
-             Gemini
-                │
-                ▼
-       Citation Validation
-                │
-                ▼
-        Confidence Engine
-                │
-        ┌───────┴────────┐
-        ▼                ▼
-      ANSWER           ABSTAIN
-        │
-        ▼
-  Cited Research Response
->>>>>>> dd3415f (readme.md updated)
+The health endpoint can be used to verify that the deployed backend service is running.
