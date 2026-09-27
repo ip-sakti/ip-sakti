@@ -1,4 +1,4 @@
-# 🇮🇳 IP-SAKTI Sahayak
+# IP-SAKTI Sahayak
 
 ### Multilingual, Source-Cited AI Assistant for Intellectual Property & Regulatory Guidance in Ayurveda
 
