@@ -1195,14 +1195,6 @@ A successful response confirms that the deployed API is reachable.
 
 https://ip-sepia-seven.vercel.app
 
-### ⚙️ Backend API
-
-https://ip-sakti-jmgy.onrender.com
-
-### ❤️ Backend Health Check
-
-https://ip-sakti-jmgy.onrender.com/health
-
 ---
 
 ## 7. Run Tests
