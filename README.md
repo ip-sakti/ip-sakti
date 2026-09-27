@@ -143,3 +143,45 @@ Query Processing
         │
         ▼
   Cited Research Response
+
+## 🚀 Why IP-SAKTI Sahayak Is Different
+
+A generic AI chatbot is primarily designed for conversation.
+
+**IP-SAKTI Sahayak is designed for evidence-grounded research.**
+
+### Generic Chatbot
+
+```text
+Question
+   ↓
+LLM
+   ↓
+Answer
+
+### IP-SAKTI Sahayak
+
+```text
+Question
+   ↓
+Language Detection
+   ↓
+Query Processing
+   ↓
+Hybrid Retrieval
+   ↓
+RRF Fusion
+   ↓
+Evidence Re-ranking
+   ↓
+Domain Agents
+   ↓
+LLM Reasoning
+   ↓
+Citation Validation
+   ↓
+Confidence Assessment
+   ↓
+Answer / Abstain
+   ↓
+Cited Research Response
