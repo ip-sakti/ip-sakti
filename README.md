@@ -1,233 +1,145 @@
-# IP-SAKTI Sahayak
+# 🇮🇳 IP-SAKTI Sahayak
 
-### Multilingual AI Assistant for Intellectual Property and Regulatory Guidance in Ayurveda
+### Multilingual, Source-Cited AI Assistant for Intellectual Property & Regulatory Guidance in Ayurveda
 
-IP-SAKTI Sahayak is a multilingual, evidence-grounded AI assistant designed to help users navigate Intellectual Property (IP), Ayurveda Traditional Knowledge (TK), biodiversity and Access & Benefit Sharing (ABS), patent/prior-art information, and regulatory guidance.
+[![Smart India Hackathon](https://img.shields.io/badge/Smart%20India%20Hackathon-2026-orange)]()
+[![Problem Statement](https://img.shields.io/badge/SIH-SIH26045-blue)]()
+[![Domain](https://img.shields.io/badge/Domain-AI%20%7C%20RAG%20%7C%20IP%20%7C%20AYUSH-green)]()
+[![Architecture](https://img.shields.io/badge/Architecture-Hybrid%20RAG-purple)]()
+[![Authentication](https://img.shields.io/badge/Auth-Supabase-green)]()
 
-The system combines multilingual NLP, agentic query orchestration, formulation classification, jurisdiction-aware rule processing, hybrid Retrieval-Augmented Generation (RAG), evidence reranking, citation validation, confidence assessment, and safe abstention.
-
-The MVP is designed around authoritative and permitted knowledge sources and provides source-grounded responses rather than unsupported legal or regulatory claims.
+> **IP-SAKTI Sahayak** is a multilingual, source-cited AI research assistant designed to provide grounded guidance on Intellectual Property, Ayurveda, Traditional Knowledge, Access & Benefit Sharing (ABS), and regulatory frameworks across Indian and international regimes.
 
 ---
 
-##Prototype / Demo & Resources
-https://youtu.be/Mh9fL7V3cxg
+## 🏆 Smart India Hackathon 2026
 
-## 1. Problem
+| Field | Details |
+|---|---|
+| **SIH Code** | `SIH26045` |
+| **Problem Statement** | **IP-SAKTI Sahayak** |
+| **Category** | Software |
+| **Domain** | AI / RAG / Intellectual Property / AYUSH |
+| **Core Technology** | Hybrid Retrieval-Augmented Generation |
+| **Primary Objective** | Source-grounded IP and regulatory research |
 
-Ayurvedic formulations and Traditional Knowledge involve complex interactions between:
+### Problem Statement
 
-- Intellectual Property
+> **IP-SAKTI Sahayak — a multilingual, RAG-based (source-cited) AI assistant for Intellectual Property and regulatory guidance in Ayurveda, across national and international regimes.**
+
+---
+
+# 📌 Table of Contents
+
+- [The Problem](#-the-problem)
+- [Our Solution](#-our-solution)
+- [Why IP-SAKTI Sahayak Is Different](#-why-ip-sakti-sahayak-is-different)
+- [Key Features](#-key-features)
+- [How the System Works](#-how-the-system-works)
+- [System Architecture](#-system-architecture)
+- [RAG Pipeline](#-rag-pipeline)
+- [Confidence Score](#-confidence-score)
+- [Multilingual & Voice Architecture](#-multilingual--voice-architecture)
+- [Authentication & Security](#-authentication--security)
+- [Research History](#-research-history)
+- [Source & Citation System](#-source--citation-system)
+- [Project Statistics](#-project-statistics)
+- [Technology Stack](#-technology-stack)
+- [Repository Structure](#-repository-structure)
+- [Deployment Architecture](#-deployment-architecture)
+- [Budget & Cost Strategy](#-budget--cost-strategy)
+- [Future Upgrades](#-future-upgrades)
+- [Limitations](#-limitations)
+- [Getting Started](#-getting-started)
+- [Team](#-team)
+- [License](#-license)
+
+---
+
+# 🔎 The Problem
+
+Researching Intellectual Property and regulatory requirements in Ayurveda is difficult because relevant information is distributed across multiple domains:
+
+- Intellectual Property regulations
+- Patents and trademarks
+- AYUSH regulations
 - Traditional Knowledge
-- Patents and prior art
-- Biodiversity
-- Access and Benefit Sharing (ABS)
-- Drug and formulation classification
-- National and international regulations
+- Access & Benefit Sharing
+- Biological resources
+- National regulatory frameworks
+- International IP frameworks
+- Government notifications and official sources
 
-Users may struggle to determine which rules, authorities, databases, and procedures are relevant to a particular formulation or IP question.
+A conventional chatbot can generate a fluent answer, but fluency does not guarantee that the answer is:
 
-IP-SAKTI Sahayak aims to provide a single multilingual interface that helps users identify relevant information and authoritative evidence.
+- grounded in authoritative sources,
+- jurisdiction-aware,
+- traceable,
+- reproducible,
+- or safe when evidence is insufficient.
 
-The system is an informational decision-support assistant and does not replace professional legal, regulatory, or IP advice.
+### The core problem
 
----
+**Users need research assistance, not just generated text.**
 
-# 2. Core Objectives
-
-The MVP focuses on:
-
-1. Multilingual query understanding
-2. Ayurveda and Traditional Knowledge information retrieval
-3. Formulation/product classification
-4. Patent and prior-art information retrieval
-5. Jurisdiction-aware regulatory guidance
-6. Biodiversity and ABS guidance
-7. Hybrid semantic + keyword retrieval
-8. Evidence reranking
-9. Source-grounded answer generation
-10. Citation and evidence validation
-11. Confidence estimation
-12. Safe abstention for unsupported or uncertain queries
-13. Human/IP facilitator escalation pathway
+IP-SAKTI Sahayak therefore treats every research query as a retrieval, reasoning, evidence and verification problem.
 
 ---
 
-# 3. Key Capabilities
+# 💡 Our Solution
 
-### Multilingual Interaction
+## IP-SAKTI Sahayak
 
-Users can submit queries in supported Indian and international languages.
+IP-SAKTI Sahayak combines:
 
-The system performs:
+**Hybrid Retrieval + Multi-Agent Reasoning + Live Research + Citation Validation + Confidence Assessment + Abstention**
 
-- Language detection
-- Query normalization
-- Translation into the retrieval/processing language when required
-- Response translation back to the user's language
+into one research workflow.
 
-Translation is performed using pretrained multilingual models or approved translation APIs.
-
----
-
-### Formulation Classification
-
-The system identifies or asks for clarification about the relevant formulation/product category.
-
-Potential categories include:
-
-- Classical / generic Ayurvedic medicine
-- Proprietary medicine
-- New / non-classical drug
-- Phytopharmaceutical
-- Ayurveda-Aahar / nutraceutical
-- Cosmetic
-
-Classification is used to improve downstream regulatory and IP routing.
-
----
-
-### Jurisdiction Awareness
-
-The user can explicitly select:
-
-- India
-- International
-- Both
-
-Jurisdiction is treated as a first-class input to prevent national and international rules from being conflated.
-
----
-
-### Intellectual Property Guidance
-
-The IP workflow can assist with:
-
-- Patent-related queries
-- Prior-art discovery
-- Traditional Knowledge and patentability considerations
-- IP authority information
-- Relevant patent databases
-- TKDL/prior-art pointers where permitted
-
----
-
-### Traditional Knowledge and ABS
-
-The TK/ABS workflow can assist with:
-
-- Ayurveda Traditional Knowledge
-- Traditional knowledge references
-- Biodiversity-related information
-- Access and Benefit Sharing concepts
-- Relevant authorities and regulatory information
-- Source-grounded pointers to applicable information
-
----
-
-### Regulatory Guidance
-
-The regulatory workflow provides:
-
-- Jurisdiction-aware regulatory information
-- Formulation-category-aware guidance
-- Relevant authority identification
-- Relevant rules and provisions from the curated knowledge base
-- Source citations
-
----
-
-# 4. System Architecture
-
-                              USER
-                                │
-                                ▼
-                    ┌──────────────────────┐
-                    │    STREAMLIT UI      │
-                    │                      │
-                    │ • Query              │
-                    │ • Language           │
-                    │ • Jurisdiction       │
-                    │ • Formulation info   │
-                    └──────────┬───────────┘
-                               │
-                               ▼
-                    LANGUAGE DETECTION
-                               │
-                               ▼
-                    MULTILINGUAL LAYER
-                               │
-                               ▼
-                    QUERY NORMALIZATION
-                               │
-                               ▼
-                        ORCHESTRATOR
-                               │
-               ┌───────────────┼────────────────┐
-               │               │                │
-               ▼               ▼                ▼
-            INTENT       JURISDICTION       FORMULATION
-        CLASSIFICATION      ANALYSIS        CLASSIFICATION
-               │               │                │
-               └───────────────┼────────────────┘
-                               │
-                               ▼
-                         RULE ENGINE
-                               │
-                               ▼
-                        AGENT ROUTER
-                               │
-                ┌──────────────┼──────────────┐
-                │              │              │
-                ▼              ▼              ▼
-            IP AGENT       REGULATORY      TK / ABS
-                             AGENT           AGENT
-                │              │              │
-                └──────────────┼──────────────┘
-                               │
-                               ▼
-                         HYBRID RAG
-                               │
-                 ┌─────────────┴─────────────┐
-                 │                           │
-                 ▼                           ▼
-            DENSE SEARCH                BM25 SEARCH
-               FAISS
-                 │                           │
-                 └─────────────┬─────────────┘
-                               │
-                               ▼
-                         RRF FUSION
-                               │
-                               ▼
-                  CROSS-ENCODER RERANKER
-                               │
-                               ▼
-                         TOP EVIDENCE
-                               │
-                               ▼
-                 PRETRAINED INSTRUCTION
-                         TUNED LLM
-                               │
-                               ▼
-                  EVIDENCE / CITATION
-                         VALIDATION
-                               │
-                               ▼
-                    CONFIDENCE ASSESSMENT
-                         │          │
-                       HIGH      LOW/UNCERTAIN
-                         │          │
-                         ▼          ▼
-                       ANSWER    SAFE ABSTENTION
-                                      │
-                                      ▼
-                                   HUMAN / IP
-                                   FACILITATOR
-                                   ESCALATION
-                         │
-                         ▼
-                  RESPONSE TRANSLATION
-                         │
-                         ▼
-                        USER
+```text
+User Question
+      │
+      ▼
+Language Detection
+      │
+      ▼
+Query Processing
+      │
+      ▼
+┌─────────────────────────────┐
+│      HYBRID RETRIEVAL       │
+│                             │
+│  FAISS      BM25      WEB   │
+│    │          │        │    │
+└────┼──────────┼────────┼────┘
+     │          │        │
+     └──────────┼────────┘
+                ▼
+        RRF Fusion
+                │
+                ▼
+        Cross-Encoder
+         Re-ranking
+                │
+                ▼
+       Multi-Agent Layer
+    ┌───────────┼───────────┐
+    ▼           ▼           ▼
+ IP Agent   AYUSH Agent   TK/ABS Agent
+    │           │           │
+    └───────────┼───────────┘
+                ▼
+             Gemini
+                │
+                ▼
+       Citation Validation
+                │
+                ▼
+        Confidence Engine
+                │
+        ┌───────┴────────┐
+        ▼                ▼
+      ANSWER           ABSTAIN
+        │
+        ▼
+  Cited Research Response
