@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 
 # 🇮🇳 IP-SAKTI Sahayak
 
@@ -9,6 +10,18 @@
 [![Architecture](https://img.shields.io/badge/Architecture-Hybrid%20RAG-purple)]()
 [![Authentication](https://img.shields.io/badge/Auth-Supabase-green)]()
 
+=======
+# 🇮🇳 IP-SAKTI Sahayak
+
+### Multilingual, Source-Cited AI Assistant for Intellectual Property & Regulatory Guidance in Ayurveda
+
+[![Smart India Hackathon](https://img.shields.io/badge/Smart%20India%20Hackathon-2026-orange)]()
+[![Problem Statement](https://img.shields.io/badge/SIH-SIH26045-blue)]()
+[![Domain](https://img.shields.io/badge/Domain-AI%20%7C%20RAG%20%7C%20IP%20%7C%20AYUSH-green)]()
+[![Architecture](https://img.shields.io/badge/Architecture-Hybrid%20RAG-purple)]()
+[![Authentication](https://img.shields.io/badge/Auth-Supabase-green)]()
+
+>>>>>>> dd3415f (readme.md updated)
 > **IP-SAKTI Sahayak** is a multilingual, source-cited AI research assistant designed to provide grounded guidance on Intellectual Property, Ayurveda, Traditional Knowledge, Access & Benefit Sharing (ABS), and regulatory frameworks across Indian and international regimes.
 
 ---
@@ -39,6 +52,12 @@
 - [How the System Works](#-how-the-system-works)
 - [System Architecture](#-system-architecture)
 - [RAG Pipeline](#-rag-pipeline)
+<<<<<<< HEAD
+=======
+- [Confidence Score](#-confidence-score)
+- [Multilingual & Voice Architecture](#-multilingual--voice-architecture)
+- [Authentication & Security](#-authentication--security)
+>>>>>>> dd3415f (readme.md updated)
 - [Research History](#-research-history)
 - [Source & Citation System](#-source--citation-system)
 - [Project Statistics](#-project-statistics)
@@ -89,6 +108,7 @@ IP-SAKTI Sahayak therefore treats every research query as a retrieval, reasoning
 ## IP-SAKTI Sahayak
 
 IP-SAKTI Sahayak combines:
+<<<<<<< HEAD
 
 **Hybrid Retrieval + Multi-Agent Reasoning + Live Research + Citation Validation + Confidence Assessment + Abstention**
 
@@ -142,9 +162,12 @@ Query Processing
         ▼
   Cited Research Response
 ```
+=======
+>>>>>>> dd3415f (readme.md updated)
 
----
+**Hybrid Retrieval + Multi-Agent Reasoning + Live Research + Citation Validation + Confidence Assessment + Abstention**
 
+<<<<<<< HEAD
 ## 🚀 Why IP-SAKTI Sahayak Is Different
 
 A generic AI chatbot is primarily designed for conversation.
@@ -568,3 +591,54 @@ When the available evidence is insufficient, the system can follow the **Safe Ab
 The architecture separates **query understanding, domain routing, retrieval, evidence validation, and response safety** into distinct layers.
 
 This allows IP-SAKTI Sahayak to function as a structured research system rather than a simple direct question-to-LLM pipeline.
+=======
+into one research workflow.
+
+```text
+User Question
+      │
+      ▼
+Language Detection
+      │
+      ▼
+Query Processing
+      │
+      ▼
+┌─────────────────────────────┐
+│      HYBRID RETRIEVAL       │
+│                             │
+│  FAISS      BM25      WEB   │
+│    │          │        │    │
+└────┼──────────┼────────┼────┘
+     │          │        │
+     └──────────┼────────┘
+                ▼
+        RRF Fusion
+                │
+                ▼
+        Cross-Encoder
+         Re-ranking
+                │
+                ▼
+       Multi-Agent Layer
+    ┌───────────┼───────────┐
+    ▼           ▼           ▼
+ IP Agent   AYUSH Agent   TK/ABS Agent
+    │           │           │
+    └───────────┼───────────┘
+                ▼
+             Gemini
+                │
+                ▼
+       Citation Validation
+                │
+                ▼
+        Confidence Engine
+                │
+        ┌───────┴────────┐
+        ▼                ▼
+      ANSWER           ABSTAIN
+        │
+        ▼
+  Cited Research Response
+>>>>>>> dd3415f (readme.md updated)
