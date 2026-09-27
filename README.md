@@ -46,7 +46,6 @@
 - [Budget & Cost Strategy](#-budget--cost-strategy)
 - [Future Upgrades](#-future-upgrades)
 - [Getting Started](#-getting-started)
-- [Team](#-team)
 - [License](#-license)
 
 ---
